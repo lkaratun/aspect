@@ -138,7 +138,6 @@ namespace aspect
           if (in.strain_rate.size())
             strainrate_E2 = in.strain_rate[i].norm();
 
-          //strainrate_E2 = std::sqrt(std::pow(strainrate_E2,2) + std::pow(min_strain_rate,2));
           strainrate_E2 = std::max(strainrate_E2,min_strain_rate);
           //if (strainrate_E2>1e-18)
           //std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
@@ -152,16 +151,16 @@ namespace aspect
             {
 
               //***************Calculate crustal viscosity***************
-              //Drucker-Prager yield criterion (by John)
+							//Drucker-Prager yield criterion (by John)
               sigma_y = ( (dim==3)
                           ?
-                          ( 6.0 * cohesion[j] * std::cos(angle_if[j]) + 2.0 * std::max(in.pressure[i],0.0) * std::sin(angle_if[j]) )
-                          / ( std::sqrt(3.0) * (3.0 + std::sin(angle_if[j]) ) )
+                          ( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(in.pressure[i],0.0) * std::sin(angle_if[j]*M_PI/180) )
+                          / ( std::sqrt(3.0) * (3.0 + std::sin(angle_if[j]*M_PI/180) ) )
                           :
-                          cohesion[j] * std::cos(angle_if[j]) + std::max(in.pressure[i],0.0) * std::sin(angle_if[j]) );
+                          cohesion[j] * std::cos(angle_if[j]*M_PI/180) + std::max(in.pressure[i],0.0) * std::sin(angle_if[j]*M_PI/180) );
 
 
-              //Mohr-Coulomb
+              //Mohr-Coulomb criterion
               //sigma_y = cohesion[j] + in.pressure[i]*std::tan(angle_if[j]*M_PI/180);
               if (strainrate_E2)
                 viscosity_MC = 1/(1/(sigma_y/(2*strainrate_E2)+eta_min)+1/eta_max);
@@ -176,15 +175,14 @@ namespace aspect
 
               if (strainrate_E2 && in.temperature[i])
                 {
-                  strainrate_mod=pow(strainrate_E2,(nvs[j]-1)/(nvs[j]));
+									//Normalize strain rate
+									strainrate_mod=strainrate_E2/ref_strain_rate;
+                  strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/(nvs[j]));
                   strainrate_mod=1/strainrate_mod;
-                  if (j<2) //crust and weak zone
+                  //if (j<3) //crust and weak zone
                     if (in.temperature[i])
-                      //Strainrate independent formula
-                      //viscosity_dislocation_creep =  1e13 * exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]));
-
                       //Gerya formula
-                      viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/nvs[j]) * strainrate_mod *
+                      viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
                                                      exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]));
 
                   //diff disl
@@ -192,22 +190,32 @@ namespace aspect
                   // std::exp(-(activation_energies_dislocation[j] + pressure*activation_volumes_dislocation[j])/
                   // (constants::gas_constant*temperature));
                     else viscosity_dislocation_creep=eta_max;
-                  else //mantle
-                    viscosity_dislocation_creep =  1e15 * exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]));
+                  //else //mantle
+                    //viscosity_dislocation_creep =  1e15 * exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]));
 
-                  /*
-                  const double depth = this->get_geometry_model().depth(in.position[i]);
-                  if (depth<100000 && strainrate_E2>1e-18 && j==1)// && volume_fractions[1]>0.7)//&& in.strain_rate.size() && composition[1]>0.7
-                  {
-                    std::cout<<"depth: "<<depth<<"  ";
+                  
+                  //const double depth = this->get_geometry_model().depth(in.position[i]);
+                  //if (depth<100000 && strainrate_E2>1e-18 && j==1)// && volume_fractions[1]>0.7)//&& in.strain_rate.size() && composition[1]>0.7
+									
+									/*
+									const double x=in.position[i](0);
+									const double y=in.position[i](1);
+									const double z=in.position[i](2);									
+									
+                  if (in.temperature[i]<615 && in.temperature[i]>612 && x> 155e3 && x<180e3 && y<20e3 && j==0)
+									{
+                    // std::cout<<"depth: "<<depth<<"  ";
                     std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
-                    std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
-                    std::cout<<"sigma_y: "<<sigma_y<<"  ";
+                    // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
+                    //std::cout<<"sigma_y: "<<sigma_y<<"  ";
                     std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
+										std::cout<<"temperature: "<<in.temperature[i]<<"  ";
+										std::cout<<"pressure: "<<in.pressure[i]<<"  ";
+										std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]))<<"  ";
+										std::cout<<"prefactor: "<<F2 * 1/pow(material_parameters[j],1/nvs[j])<<"  ";
                     std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
-
-                  }
-                  */
+                  }*/
+                  
 
 
 
@@ -215,7 +223,7 @@ namespace aspect
                 }
               else viscosity_dislocation_creep=eta_max;
 
-
+					
 
               //viscosity_dislocation_creep=std::max(std::min(viscosity_dislocation_creep,eta_max),eta_min);
               //viscosity_MC=std::max(std::min(viscosity_MC,eta_max),eta_min);
@@ -475,10 +483,14 @@ namespace aspect
                              "viscosity at that point.  Select a weighted harmonic, arithmetic, "
                              "geometric, or maximum composition.");
 
-          prm.declare_entry ("Minimum strain rate", "1e-20",
+          prm.declare_entry ("Minimum strain rate", "1e-25",
                              Patterns::Double (0),
                              "Minimum strain rate for viscosity stabilization"
                              "Unitless");
+          prm.declare_entry ("Reference strain rate", "1e-15",
+                             Patterns::Double (0),
+                             "Reference strain rate for viscosity stabilization"
+                             "Unitless");														 
 
         }
         prm.leave_subsection();
@@ -508,6 +520,7 @@ namespace aspect
           mantle_viscosity           = prm.get_double ("Mantle viscosity");
           num_plastic                = prm.get_double ("Number of compositional fields with plastic rheology");
           min_strain_rate            = prm.get_double ("Minimum strain rate");
+					ref_strain_rate            = prm.get_double ("Reference strain rate");
           if (thermal_viscosity_exponent!=0.0 && reference_T == 0.0)
             AssertThrow(false, ExcMessage("Error: Material model simple with Thermal viscosity exponent can not have reference_T=0."));
 
@@ -518,7 +531,7 @@ namespace aspect
           // Parse densities
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Densities")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of density list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of density list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             densities.assign( n_fields , x_values[0]);
           else
@@ -527,7 +540,7 @@ namespace aspect
           // Parse activation energies
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Activation energies")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of activation energy list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of activation energy list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             activation_energies.assign( n_fields , x_values[0] );
           else
@@ -536,7 +549,7 @@ namespace aspect
           // Parse activation volumes
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Activation volumes")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of activation volumes list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of activation volumes list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             activation_volumes.assign( n_fields , x_values[0] );
           else
@@ -545,7 +558,7 @@ namespace aspect
           // Parse thermal expansivities
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Thermal expansivities")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of thermal expansivity list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of thermal expansivity list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             thermal_alpha.assign( n_fields , x_values[0]);
           else
@@ -554,7 +567,7 @@ namespace aspect
           // Parse stress exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Stress exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             nvs.assign( n_fields , x_values[0]);
           else
@@ -563,7 +576,7 @@ namespace aspect
           // Parse material parameters
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material parameters")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields+1"));
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             material_parameters.assign( n_fields , x_values[0]);
           else
@@ -574,6 +587,8 @@ namespace aspect
 
           // Parse angles of internal friction
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Angle of internal friction")));
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));					
           if (x_values.size() == 1)
             angle_if.assign( n_fields , x_values[0]);
           else
@@ -582,7 +597,9 @@ namespace aspect
 
           // Parse cohesions
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Cohesion")));
-          if (x_values.size() == 1)
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));          
+					if (x_values.size() == 1)
             cohesion.assign( n_fields , x_values[0]);
           else
             cohesion = x_values;
