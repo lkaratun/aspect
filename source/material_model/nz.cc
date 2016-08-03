@@ -231,6 +231,18 @@ namespace aspect
 
               if (!crash)
                 {
+                  if (isnan(viscosity_dislocation_creep) || isnan(viscosity_MC))
+                    {
+                      std::cout<<"viscosity_dislocation_creep or MC is NAN "<<viscosity_dislocation_creep<<"  "<<viscosity_MC<<" ";
+                      crash = true;											
+										}
+                }
+
+              total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
+              viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
+
+              if (!crash)
+                {
                   if (viscosities[j]>=eta_min && viscosities[j]<=eta_max)
                     {}
                   else
@@ -240,11 +252,7 @@ namespace aspect
                     }
 
 
-                }
-
-              total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
-              viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
-
+                }							
 
             }
 
@@ -265,27 +273,27 @@ namespace aspect
 
           viscosity = average_value(composition, viscosities, viscosity_averaging);
 
-          const double x=in.position[i](0);
-          const double y=in.position[i](1);
-          if (in.temperature[i]<1250 && x> 155e3 && volume_fractions[3]>0.99 && viscosity < 1e22 && x>150e3&&x<250e3 && y<50e3)
-            {
+          // const double x=in.position[i](0);
+          // const double y=in.position[i](1);
+          // if (in.temperature[i]<1250 && x> 155e3 && volume_fractions[3]>0.99 && viscosity < 1e22 && x>150e3&&x<250e3 && y<50e3)
+            // {
 
-              std::cout<<"u_crust: "<<volume_fractions[0]<<"  ";
-              std::cout<<"l_crust: "<<volume_fractions[1]<<"  ";
-              std::cout<<"weak_zone: "<<volume_fractions[2]<<"  ";
-              std::cout<<"lith: "<<volume_fractions[3]<<"  ";
-              std::cout<<"sublith: "<<volume_fractions[4]<<"  ";
-              std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
-              // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
-              std::cout<<"sigma_y: "<<sigma_y<<"  ";
-              std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
-              std::cout<<"temperature: "<<in.temperature[i]<<"  ";
-              std::cout<<"pressure: "<<in.pressure[i]<<"  ";
-              std::cout<<"exp: "<<exp((activation_energies[3]+activation_volumes[3]*in.pressure[i])/(nvs[3]*R*in.temperature[3]))<<"  ";
-              std::cout<<"prefactor: "<<1/pow(material_parameters[3],1/nvs[3])<<"  ";
-              std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
-              std::cout<<"final visc: "<<viscosity<<"  ";
-            }
+              // std::cout<<"u_crust: "<<volume_fractions[0]<<"  ";
+              // std::cout<<"l_crust: "<<volume_fractions[1]<<"  ";
+              // std::cout<<"weak_zone: "<<volume_fractions[2]<<"  ";
+              // std::cout<<"lith: "<<volume_fractions[3]<<"  ";
+              // std::cout<<"sublith: "<<volume_fractions[4]<<"  ";
+              // std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
+              // // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
+              // std::cout<<"sigma_y: "<<sigma_y<<"  ";
+              // std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
+              // std::cout<<"temperature: "<<in.temperature[i]<<"  ";
+              // std::cout<<"pressure: "<<in.pressure[i]<<"  ";
+              // std::cout<<"exp: "<<exp((activation_energies[3]+activation_volumes[3]*in.pressure[i])/(nvs[3]*R*in.temperature[3]))<<"  ";
+              // std::cout<<"prefactor: "<<1/pow(material_parameters[3],1/nvs[3])<<"  ";
+              // std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
+              // std::cout<<"final visc: "<<viscosity<<"  ";
+            // }
 
           //Crop viscosity
           out.viscosities[i] = std::max(std::min(viscosity,eta_max),eta_min);
