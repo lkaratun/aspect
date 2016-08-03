@@ -119,7 +119,7 @@ namespace aspect
         double thermal_viscosity_exponent;
         double mantle_viscosity;
         double min_strain_rate;
-				double ref_strain_rate;
+        double ref_strain_rate;
         std::vector<double> densities;
         std::vector<double> thermal_alpha;
         //new
