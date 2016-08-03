@@ -116,10 +116,10 @@ namespace aspect
 
       //Gas constant
       const double R = 8.314;
-			
-			
-			bool crash = false;
-			
+
+
+      bool crash = false;
+
       for (unsigned int i=0; i<in.position.size(); ++i)
         {
           const std::vector<double> composition = in.composition[i];
@@ -154,7 +154,7 @@ namespace aspect
             {
 
               //***************Calculate crustal viscosity***************
-							//Drucker-Prager yield criterion (by John)
+              //Drucker-Prager yield criterion (by John)
               sigma_y = ( (dim==3)
                           ?
                           ( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(in.pressure[i],0.0) * std::sin(angle_if[j]*M_PI/180) )
@@ -178,40 +178,40 @@ namespace aspect
 
               if (strainrate_E2 && in.temperature[i])
                 {
-									//Normalize strain rate
-									strainrate_mod=strainrate_E2/ref_strain_rate;
+                  //Normalize strain rate
+                  strainrate_mod=strainrate_E2/ref_strain_rate;
                   strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
                   strainrate_mod=1/strainrate_mod;
                   //if (j<3) //crust and weak zone
-                    if (in.temperature[i])
-                      //Gerya formula
-                      viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
-                                    exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nvs[j]*R*in.temperature[i]));
+                  if (in.temperature[i])
+                    //Gerya formula
+                    viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
+                                                   exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nvs[j]*R*in.temperature[i]));
 
-                    else viscosity_dislocation_creep=eta_max;
-                  
+                  else viscosity_dislocation_creep=eta_max;
+
                   //const double depth = this->get_geometry_model().depth(in.position[i]);
                   //if (depth<100000 && strainrate_E2>1e-18 && j==1)// && volume_fractions[1]>0.7)//&& in.strain_rate.size() && composition[1]>0.7
-									
-									/*
-									const double x=in.position[i](0);
-									const double y=in.position[i](1);
-									const double z=in.position[i](2);									
-									
+
+                  /*
+                  const double x=in.position[i](0);
+                  const double y=in.position[i](1);
+                  const double z=in.position[i](2);
+
                   if (in.temperature[i]<615 && in.temperature[i]>612 && x> 155e3 && x<180e3 && y<20e3 && j==0)
-									{
+                  {
                     // std::cout<<"depth: "<<depth<<"  ";
                     std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
                     // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
                     //std::cout<<"sigma_y: "<<sigma_y<<"  ";
                     std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
-										std::cout<<"temperature: "<<in.temperature[i]<<"  ";
-										std::cout<<"pressure: "<<in.pressure[i]<<"  ";
-										std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]))<<"  ";
-										std::cout<<"prefactor: "<<F2 * 1/pow(material_parameters[j],1/nvs[j])<<"  ";
+                    std::cout<<"temperature: "<<in.temperature[i]<<"  ";
+                    std::cout<<"pressure: "<<in.pressure[i]<<"  ";
+                    std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]))<<"  ";
+                    std::cout<<"prefactor: "<<F2 * 1/pow(material_parameters[j],1/nvs[j])<<"  ";
                     std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
                   }*/
-                  
+
 
 
 
@@ -219,30 +219,30 @@ namespace aspect
                 }
               else viscosity_dislocation_creep=eta_max;
 
-					
+
 
               //viscosity_dislocation_creep=std::max(std::min(viscosity_dislocation_creep,eta_max),eta_min);
               //viscosity_MC=std::max(std::min(viscosity_MC,eta_max),eta_min);
 
               //total_viscosity = pow(10,(log10(viscosity_MC)+log10(viscosity_dislocation_creep))/2);
 
-              
+
               //double total_viscosity = 2*viscosity_dislocation_creep*viscosity_MC/(viscosity_dislocation_creep+viscosity_MC);
-              
-							if (!crash)
-							{
-								if (viscosities[j]>=eta_min && viscosities[j]<=eta_max)
-									{}
-								else
-									{
-										std::cout<<"viscosities[j]: "<<viscosities[j]<<"  ";
-										crash = true;
-									}
-							
-								
-							}
-							
-							total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
+
+              if (!crash)
+                {
+                  if (viscosities[j]>=eta_min && viscosities[j]<=eta_max)
+                    {}
+                  else
+                    {
+                      std::cout<<"viscosities[j]: "<<viscosities[j]<<"  ";
+                      crash = true;
+                    }
+
+
+                }
+
+              total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
               viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
 
 
@@ -264,39 +264,39 @@ namespace aspect
           viscosity = pow(10,viscosity);*/
 
           viscosity = average_value(composition, viscosities, viscosity_averaging);
-					
-					const double x=in.position[i](0);			
-					const double y=in.position[i](1);					
-					if (in.temperature[i]<1250 && x> 155e3 && volume_fractions[3]>0.99 && viscosity < 1e22 && x>150e3&&x<250e3 && y<50e3)
-					{
 
-							std::cout<<"u_crust: "<<volume_fractions[0]<<"  ";
-							std::cout<<"l_crust: "<<volume_fractions[1]<<"  ";
-							std::cout<<"weak_zone: "<<volume_fractions[2]<<"  ";
-							std::cout<<"lith: "<<volume_fractions[3]<<"  ";
-							std::cout<<"sublith: "<<volume_fractions[4]<<"  ";
-						std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
-						// std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
-						std::cout<<"sigma_y: "<<sigma_y<<"  ";
-						std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
-						std::cout<<"temperature: "<<in.temperature[i]<<"  ";
-						std::cout<<"pressure: "<<in.pressure[i]<<"  ";
-						std::cout<<"exp: "<<exp((activation_energies[3]+activation_volumes[3]*in.pressure[i])/(nvs[3]*R*in.temperature[3]))<<"  ";
-						std::cout<<"prefactor: "<<1/pow(material_parameters[3],1/nvs[3])<<"  ";
-						std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
-						std::cout<<"final visc: "<<viscosity<<"  ";
-					}
-					
+          const double x=in.position[i](0);
+          const double y=in.position[i](1);
+          if (in.temperature[i]<1250 && x> 155e3 && volume_fractions[3]>0.99 && viscosity < 1e22 && x>150e3&&x<250e3 && y<50e3)
+            {
+
+              std::cout<<"u_crust: "<<volume_fractions[0]<<"  ";
+              std::cout<<"l_crust: "<<volume_fractions[1]<<"  ";
+              std::cout<<"weak_zone: "<<volume_fractions[2]<<"  ";
+              std::cout<<"lith: "<<volume_fractions[3]<<"  ";
+              std::cout<<"sublith: "<<volume_fractions[4]<<"  ";
+              std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
+              // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
+              std::cout<<"sigma_y: "<<sigma_y<<"  ";
+              std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
+              std::cout<<"temperature: "<<in.temperature[i]<<"  ";
+              std::cout<<"pressure: "<<in.pressure[i]<<"  ";
+              std::cout<<"exp: "<<exp((activation_energies[3]+activation_volumes[3]*in.pressure[i])/(nvs[3]*R*in.temperature[3]))<<"  ";
+              std::cout<<"prefactor: "<<1/pow(material_parameters[3],1/nvs[3])<<"  ";
+              std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
+              std::cout<<"final visc: "<<viscosity<<"  ";
+            }
+
           //Crop viscosity
           out.viscosities[i] = std::max(std::min(viscosity,eta_max),eta_min);
-					
-					
-					if (out.viscosities[i]>=eta_min && out.viscosities[i]<=eta_max)
-						{}
-					else
-						{
-							std::cout<<"out.viscosities[i]: "<<out.viscosities[i]<<"  ";
-						}
+
+
+          if (out.viscosities[i]>=eta_min && out.viscosities[i]<=eta_max)
+            {}
+          else
+            {
+              std::cout<<"out.viscosities[i]: "<<out.viscosities[i]<<"  ";
+            }
 
           double density = 0.0;
           for (unsigned int j=0; j < volume_fractions.size(); ++j)
@@ -524,7 +524,7 @@ namespace aspect
           prm.declare_entry ("Reference strain rate", "1e-15",
                              Patterns::Double (0),
                              "Reference strain rate for viscosity stabilization"
-                             "Unitless");														 
+                             "Unitless");
 
         }
         prm.leave_subsection();
@@ -554,7 +554,7 @@ namespace aspect
           mantle_viscosity           = prm.get_double ("Mantle viscosity");
           num_plastic                = prm.get_double ("Number of compositional fields with plastic rheology");
           min_strain_rate            = prm.get_double ("Minimum strain rate");
-					ref_strain_rate            = prm.get_double ("Reference strain rate");
+          ref_strain_rate            = prm.get_double ("Reference strain rate");
           if (thermal_viscosity_exponent!=0.0 && reference_T == 0.0)
             AssertThrow(false, ExcMessage("Error: Material model simple with Thermal viscosity exponent can not have reference_T=0."));
 
@@ -622,7 +622,7 @@ namespace aspect
           // Parse angles of internal friction
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Angle of internal friction")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));					
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             angle_if.assign( n_fields , x_values[0]);
           else
@@ -632,8 +632,8 @@ namespace aspect
           // Parse cohesions
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Cohesion")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));          
-					if (x_values.size() == 1)
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+          if (x_values.size() == 1)
             cohesion.assign( n_fields , x_values[0]);
           else
             cohesion = x_values;
