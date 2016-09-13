@@ -71,6 +71,12 @@ namespace aspect
 
         virtual void evaluate(const typename Interface<dim>::MaterialModelInputs &in,
                               typename Interface<dim>::MaterialModelOutputs &out) const;
+															
+				virtual double viscosity_ratio (const double temperature,
+																				const double pressure,
+																				const std::vector<double> &comp,
+																				const SymmetricTensor<2,dim> &strain_rate,
+																				const Point<dim> &p) const															
 
 
         /**
