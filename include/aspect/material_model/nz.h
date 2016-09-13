@@ -76,7 +76,7 @@ namespace aspect
 																				const double pressure,
 																				const std::vector<double> &comp,
 																				const SymmetricTensor<2,dim> &strain_rate,
-																				const Point<dim> &p) const															
+																				const Point<dim> &p) const;															
 
 
         /**
