@@ -31,10 +31,10 @@ namespace aspect
 {
   namespace MaterialModel
   {
-    template <int dim>
+		template <int dim>
     std::vector<double>
     nz<dim>::
-    compute_volume_fractions( const std::vector<double> &compositional_fields) const
+    compute_volume_fractions(const std::vector<double> &compositional_fields) const
     {
       std::vector<double> volume_fractions(compositional_fields.size());
 
@@ -124,6 +124,7 @@ namespace aspect
         {
           const std::vector<double> composition = in.composition[i];
           const std::vector<double> volume_fractions = compute_volume_fractions(composition);
+					
 
           std::vector<double> viscosities(volume_fractions.size());
 
@@ -146,8 +147,8 @@ namespace aspect
           //std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
 
           double sigma_y, viscosity_MC, strainrate_mod, viscosity_dislocation_creep, total_viscosity;
-          double h=1e-3;
-          double m=0;
+          //double h=1e-3;
+          //double m=0;
 
 
           for (unsigned int j=0; j < volume_fractions.size(); j++)
@@ -331,25 +332,27 @@ namespace aspect
 
     template <int dim>
     double
-    Interface<dim>::
+    nz<dim>::
     viscosity_ratio (const double temperature,
                      const double pressure,
-                     const std::vector<double> &comp,
+                     const std::vector<double> &composition,
                      const SymmetricTensor<2,dim> &strain_rate,
                      const Point<dim> &p) const
     {
       const std::vector<double> volume_fractions = compute_volume_fractions(composition);
-			
+			std::vector<double> viscosities_MC(volume_fractions.size());
+			std::vector<double> viscosities_dislocation_creep(volume_fractions.size());
+			const double R = 8.314;
 			double strainrate_E2 = 0;
 
-			if (strain_rate.size())
-				strainrate_E2 = strain_rate[i].norm();
+			//if (strain_rate.size())
+				strainrate_E2 = strain_rate.norm();
 
 			strainrate_E2 = std::max(strainrate_E2,min_strain_rate);
 
 			double sigma_y, viscosity_MC, strainrate_mod, viscosity_dislocation_creep, total_viscosity;
-			double h=1e-3;
-			double m=0;		
+			//double h=1e-3;
+			//double m=0;		
 
 			for (unsigned int j=0; j < volume_fractions.size(); j++)
 				{
@@ -358,10 +361,10 @@ namespace aspect
 					//Drucker-Prager yield criterion (by John)
 					sigma_y = ( (dim==3)
 											?
-											( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(pressure[i],0.0) * std::sin(angle_if[j]*M_PI/180) )
+											( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(pressure,0.0) * std::sin(angle_if[j]*M_PI/180) )
 											/ ( std::sqrt(3.0) * (3.0 + std::sin(angle_if[j]*M_PI/180) ) )
 											:
-											cohesion[j] * std::cos(angle_if[j]*M_PI/180) + std::max(pressure[i],0.0) * std::sin(angle_if[j]*M_PI/180) );
+											cohesion[j] * std::cos(angle_if[j]*M_PI/180) + std::max(pressure,0.0) * std::sin(angle_if[j]*M_PI/180) );
 
 					if (strainrate_E2)
 						viscosity_MC = 1/(1/(sigma_y/(2*strainrate_E2)+eta_min)+1/eta_max);
@@ -373,16 +376,16 @@ namespace aspect
 					//Gerya formula
 					double F2 = 1/pow(2,(2*nvs[j]-1)/nvs[j]);
 
-					if (strainrate_E2 && temperature[i])
+					if (strainrate_E2 && temperature)
 						{
 							//Normalize strain rate
 							strainrate_mod=strainrate_E2/ref_strain_rate;
 							strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
 							strainrate_mod=1/strainrate_mod;
-							if (temperature[i])
+							if (temperature)
 								//Gerya formula
 								viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
-																							 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure[i],0.0))/(nvs[j]*R*temperature[i]));
+																							 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nvs[j]*R*temperature));
 
 							else viscosity_dislocation_creep=eta_max;
 
@@ -391,61 +394,17 @@ namespace aspect
 
 					// total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
 					// viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
-
 					
-					return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviuor
+					viscosities_MC[j]=viscosity_MC;
+					viscosities_dislocation_creep[j]=viscosity_dislocation_creep;
 				}
-
-
-
-
-
 
 			//***************Calculate total viscosity***************
-
-
 			double viscosity = 0;
-			/*
-			for (unsigned int j=0; j < volume_fractions.size(); ++j)
-					viscosity += log10(viscosities[j])*volume_fractions[j];
-
-			viscosity = pow(10,viscosity);*/
-
-			viscosity = average_value(composition, viscosities, viscosity_averaging);
-
-			// const double x=in.position[i](0);
-			// const double y=in.position[i](1);
-			// if (in.temperature[i]<1250 && x> 155e3 && volume_fractions[3]>0.99 && viscosity < 1e22 && x>150e3&&x<250e3 && y<50e3)
-				// {
-
-					// std::cout<<"u_crust: "<<volume_fractions[0]<<"  ";
-					// std::cout<<"l_crust: "<<volume_fractions[1]<<"  ";
-					// std::cout<<"weak_zone: "<<volume_fractions[2]<<"  ";
-					// std::cout<<"lith: "<<volume_fractions[3]<<"  ";
-					// std::cout<<"sublith: "<<volume_fractions[4]<<"  ";
-					// std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
-					// // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
-					// std::cout<<"sigma_y: "<<sigma_y<<"  ";
-					// std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
-					// std::cout<<"temperature: "<<in.temperature[i]<<"  ";
-					// std::cout<<"pressure: "<<in.pressure[i]<<"  ";
-					// std::cout<<"exp: "<<exp((activation_energies[3]+activation_volumes[3]*in.pressure[i])/(nvs[3]*R*in.temperature[3]))<<"  ";
-					// std::cout<<"prefactor: "<<1/pow(material_parameters[3],1/nvs[3])<<"  ";
-					// std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
-					// std::cout<<"final visc: "<<viscosity<<"  ";
-				// }
-
-			//Crop viscosity
-			out.viscosities[i] = std::max(std::min(viscosity,eta_max),eta_min);
-
-
-			if (out.viscosities[i]>=eta_min && out.viscosities[i]<=eta_max)
-				{}
-			else
-				{
-					std::cout<<"out.viscosities[i]: "<<out.viscosities[i]<<"  ";
-				}
+			viscosity_MC = average_value(composition, viscosities_MC, viscosity_averaging);
+			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);	
 			
+			return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviuor
     }
 
     template <int dim>
