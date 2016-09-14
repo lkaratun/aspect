@@ -167,7 +167,7 @@ namespace aspect
               //Mohr-Coulomb criterion
               //sigma_y = cohesion[j] + in.pressure[i]*std::tan(angle_if[j]*M_PI/180);
               if (strainrate_E2)
-                viscosity_MC = 1/(1/(sigma_y/(2*strainrate_E2)+eta_min)+1/eta_max);
+                viscosity_MC = 1/(1/(sigma_y/(2*ref_strain_rate*pow(strainrate_E2/ref_strain_rate,(nps[j]-1)/nps[j]))+eta_min)+1/eta_max);
               else
                 viscosity_MC=eta_max;
 
@@ -348,7 +348,7 @@ namespace aspect
 			strainrate_E2 = strain_rate.norm();
 			strainrate_E2 = std::max(strainrate_E2,min_strain_rate);
 
-			double sigma_y, viscosity_MC, strainrate_mod, viscosity_dislocation_creep, total_viscosity;
+			double sigma_y, viscosity_MC, strainrate_mod, viscosity_dislocation_creep;
 
 			for (unsigned int j=0; j < volume_fractions.size(); j++)
 				{
@@ -579,6 +579,12 @@ namespace aspect
                              "for a total of N+1 values, where N is the number of compositional fields."
                              "If only one values is given, then all use the same value.  Units: None");
 
+          prm.declare_entry ("Plastic exponents", "10",
+                             Patterns::List(Patterns::Double(0)),
+                             "List of plastic stress exponents, $n_p$, for background mantle and compositional fields,"
+                             "for a total of N+1 values, where N is the number of compositional fields."
+                             "If only one values is given, then all use the same value.  Units: None");														 
+
           prm.declare_entry ("Material parameters", "1e-20",
                              Patterns::List(Patterns::Double(0)),
                              "List of material parameter values. Units: Pa^-n*s^-1");
@@ -681,6 +687,15 @@ namespace aspect
             nvs.assign( n_fields , x_values[0]);
           else
             nvs = x_values;
+					
+					// Parse plastic exponents
+          x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Plastic exponents")));
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of np list must be either one, or n_compositional_fields"));
+          if (x_values.size() == 1)
+            nps.assign( n_fields , x_values[0]);
+          else
+            nps = x_values;
 
           // Parse material parameters
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material parameters")));
