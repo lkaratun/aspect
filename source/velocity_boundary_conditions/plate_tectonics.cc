@@ -11,11 +11,13 @@ namespace aspect
     boundary_velocity (const Point<dim> &p) const
     {
       Tensor<1,dim> velocity;
+			for (int i = 0; i<dim; ++i)
+				velocity[i]=0;
       //coordinates
       const double x=p(0);
       const double y=p(1);
-      const double z=p(2);
-
+      const double z=p(dim-1);
+			
       const double cm=0.01;
       double vel_x=vel*cm*cos(angle*M_PI/180);
       double vel_y=vel*cm*sin(angle*M_PI/180);
@@ -45,9 +47,7 @@ namespace aspect
       //const double alfa = 45*M_PI/180; //Alpine fault angle
 
       //In- and out-flux for side faces
-
-
-      if (x<width/2-wz_width/2)//left side
+				if (x<width/2-wz_width/2)//left side
         {
           if (z > total_thickness-lithospheric_thickness+transition_zone)
             velocity[0]=vel_x_in;
@@ -66,10 +66,7 @@ namespace aspect
           else
             velocity[0]=-vel_x_out;
         }
-      velocity[1]=0;
-      velocity[2]=0;
 
-      double vel_y_temp = velocity[1];
 
 
       /*
