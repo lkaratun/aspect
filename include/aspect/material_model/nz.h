@@ -133,6 +133,7 @@ namespace aspect
         std::vector<double> activation_volumes;
         std::vector<double> material_parameters;
         std::vector<double> nvs;
+				std::vector<double> nps;
         double num_plastic;
 
     };
