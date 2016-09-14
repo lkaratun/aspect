@@ -343,22 +343,18 @@ namespace aspect
 			std::vector<double> viscosities_MC(volume_fractions.size());
 			std::vector<double> viscosities_dislocation_creep(volume_fractions.size());
 			const double R = 8.314;
+			
 			double strainrate_E2 = 0;
-
-			//if (strain_rate.size())
-				strainrate_E2 = strain_rate.norm();
-
+			strainrate_E2 = strain_rate.norm();
 			strainrate_E2 = std::max(strainrate_E2,min_strain_rate);
 
 			double sigma_y, viscosity_MC, strainrate_mod, viscosity_dislocation_creep, total_viscosity;
-			//double h=1e-3;
-			//double m=0;		
 
 			for (unsigned int j=0; j < volume_fractions.size(); j++)
 				{
 
 					//***************Calculate crustal viscosity***************
-					//Drucker-Prager yield criterion (by John)
+					//Drucker-Prager yield criterion 
 					sigma_y = ( (dim==3)
 											?
 											( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(pressure,0.0) * std::sin(angle_if[j]*M_PI/180) )
@@ -370,9 +366,9 @@ namespace aspect
 						viscosity_MC = 1/(1/(sigma_y/(2*strainrate_E2)+eta_min)+1/eta_max);
 					else
 						viscosity_MC=eta_max;
+					
 
 					//Calculate dislocation creep
-
 					//Gerya formula
 					double F2 = 1/pow(2,(2*nvs[j]-1)/nvs[j]);
 
@@ -382,25 +378,20 @@ namespace aspect
 							strainrate_mod=strainrate_E2/ref_strain_rate;
 							strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
 							strainrate_mod=1/strainrate_mod;
-							if (temperature)
-								//Gerya formula
-								viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
-																							 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nvs[j]*R*temperature));
-
-							else viscosity_dislocation_creep=eta_max;
-
+							//Gerya formula
+							viscosity_dislocation_creep =  F2 * 1/material_parameters[j] * strainrate_mod *
+																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nvs[j]*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
 
 					// total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
 					// viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
 					
-					viscosities_MC[j]=viscosity_MC;
-					viscosities_dislocation_creep[j]=viscosity_dislocation_creep;
+					viscosities_MC[j]=std::max(std::min(viscosity_MC,eta_max),eta_min);
+					viscosities_dislocation_creep[j]=std::max(std::min(viscosity_dislocation_creep,eta_max),eta_min);
 				}
 
 			//***************Calculate total viscosity***************
-			double viscosity = 0;
 			viscosity_MC = average_value(composition, viscosities_MC, viscosity_averaging);
 			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);	
 			
