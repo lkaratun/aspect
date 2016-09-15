@@ -187,7 +187,7 @@ namespace aspect
                   if (in.temperature[i])
                     //Gerya formula
                     viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
-                                                   exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nvs[j]*R*in.temperature[i]));
+                                                   exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(3.5*R*in.temperature[i]));
 
                   else viscosity_dislocation_creep=eta_max;
 
@@ -380,7 +380,7 @@ namespace aspect
 							strainrate_mod=1/strainrate_mod;
 							//Gerya formula
 							viscosity_dislocation_creep =  F2 * 1/material_parameters[j] * strainrate_mod *
-																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nvs[j]*R*temperature));
+																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(/*nvs[j]*/3.5*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
 
@@ -395,7 +395,7 @@ namespace aspect
 			viscosity_MC = average_value(composition, viscosities_MC, viscosity_averaging);
 			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);	
 			
-			return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviuor
+			return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviour
     }
 
     template <int dim>
