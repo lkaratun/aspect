@@ -380,7 +380,7 @@ namespace aspect
 							strainrate_mod=1/strainrate_mod;
 							//Gerya formula
 							viscosity_dislocation_creep =  F2 * 1/material_parameters[j] * strainrate_mod *
-																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(/*nvs[j]*/3.5*R*temperature));
+																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nts[j]*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
 
@@ -578,7 +578,11 @@ namespace aspect
                              "List of stress exponents, $n_p$, for background mantle and compositional fields,"
                              "for a total of N+1 values, where N is the number of compositional fields."
                              "If only one values is given, then all use the same value.  Units: None");
-
+          prm.declare_entry ("Temperature exponents", "3.5",
+                             Patterns::List(Patterns::Double(0)),
+                             "List of temerature exponents, $n_t$, for background mantle and compositional fields,"
+                             "for a total of N+1 values, where N is the number of compositional fields."
+                             "If only one values is given, then all use the same value.  Units: None");														 
           prm.declare_entry ("Plastic exponents", "10",
                              Patterns::List(Patterns::Double(0)),
                              "List of plastic stress exponents, $n_p$, for background mantle and compositional fields,"
@@ -687,6 +691,15 @@ namespace aspect
             nvs.assign( n_fields , x_values[0]);
           else
             nvs = x_values;
+
+          // Parse temeparture exponents
+          x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Temperature exponents")));
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+          if (x_values.size() == 1)
+            nts.assign( n_fields , x_values[0]);
+          else
+            nts = x_values;					
 					
 					// Parse plastic exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Plastic exponents")));
