@@ -134,6 +134,7 @@ namespace aspect
         std::vector<double> material_parameters;
         std::vector<double> nvs;
 				std::vector<double> nps;
+				std::vector<double> nts;
         double num_plastic;
 
     };
