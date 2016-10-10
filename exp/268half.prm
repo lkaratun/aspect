@@ -1,0 +1,204 @@
+set Output directory                       = /scratch/r/russ/lkaratun/aspect/exp/268half
+set CFL number                             = 0.2                                                     
+set Composition solver tolerance           = 1e-12
+set Dimension                              = 3                                                       
+set End time                               = 2e+7
+set Linear solver tolerance                = 1e-6
+set Max nonlinear iterations               = 100                                                   
+set Nonlinear solver scheme                = iterated Stokes
+set Nonlinear solver tolerance             = 1e-6
+set Number of cheap Stokes solver steps    = 0                                                       
+set Pressure normalization                 = no                                                      
+set Resume computation                     = false 
+set Start time                             = 0
+set Temperature solver tolerance           = 1e-12
+set Timing output frequency                = 0                                                       
+set Use years in output instead of seconds = true
+
+subsection Boundary temperature model
+  set Model name = initial temperature 
+end
+
+subsection Boundary velocity model
+  subsection Function
+    set Function constants  = cm=0.01, year=3.155e7, pi=3.141593, angle=60, total_depth=512e3, crustal_depth=30e3, lithospheric_depth=120e3                                                                                                                          
+    set Function expression = if (x<50e3, if (z > total_depth-lithospheric_depth, 1*cm, -(lithospheric_depth/(total_depth-lithospheric_depth))*cm), if (z > total_depth-lithospheric_depth, -1*cm, (lithospheric_depth/(total_depth-lithospheric_depth))*cm)); 0; 0 
+    set Variable names      = x,y,z
+  end
+	subsection Plate tectonics
+		set Obliquity angle 			= 0
+		set Velocity 							= 2
+		set Weak zone angle 			= 45
+		set Weak zone width 			= 60e3
+		set Weak zone height 			= 20e3
+		set Weak zone depth				= 60e3
+		set Total width						= 1024e3
+		set Total height					= 512e3
+		set Lithospheric thickness= 120e3
+		set Transition zone height= 150e3
+	end
+end
+subsection Checkpointing
+  set Steps between checkpoint = 100
+  set Time between checkpoint  = 0
+end
+subsection Compositional fields
+  set List of normalized fields = #0,1,2,3,4
+  set Names of fields           = crust, lower_crust, weak_zone, lithospheric_mantle, sublithospheric_mantle 
+  set Number of fields          = 5                                                         
+end
+subsection Compositional initial conditions
+  set Model name = function
+  subsection Function
+    set Function constants  = total_depth=512e3, total_width=1024e3, crustal_depth=20e3, lower_crustal_depth=40e3, lithospheric_depth=120e3, wz_width=40.e3, wz_height=120.e3, wz_depth=60e3
+    #Vertical Alpine Fault
+		#set Function expression = if (z > total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2)>wz_width/2)), 1, 0); if (z >= total_depth-wz_depth-wz_height/2 && z <= total_depth-wz_depth+wz_height/2 && (abs(x-total_width/2)<=wz_width/2), 1, 0); if (z > total_depth-lithospheric_depth && z <= total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2)>wz_width/2)), 1, 0); if (z <= total_depth-lithospheric_depth, 1, 0) 
+		
+		#Inclined Alpine fault
+		set Function expression = if (z > total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z))>wz_width/2)), 1, 0); if (z > total_depth-lower_crustal_depth && z <= total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z))>wz_width/2)), 1, 0); if (z >= total_depth-wz_depth-wz_height/2 && z <= total_depth-wz_depth+wz_height/2 && (abs(x-total_width/2-(total_depth-wz_depth-z))<=wz_width/2), 1, 0); if (z > total_depth-lithospheric_depth && z <= total_depth-lower_crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z))>wz_width/2)), 1, 0); if (z <= total_depth-lithospheric_depth, 1, 0) 
+    set Variable names      = x,y,z
+  end
+end
+
+subsection Boundary composition model
+	set Model name = initial composition
+end
+
+subsection Free surface
+  set Free surface stabilization theta = 0.5
+	set Additional tangential mesh velocity boundary indicators = right, left, front, back
+	set Surface velocity projection = vertical
+end
+subsection Geometry model
+  set Model name = box 
+  subsection Box
+    set Box origin X coordinate = 0
+    set Box origin Y coordinate = 0
+    set Box origin Z coordinate = 0
+    set X extent                = 1024e3 
+    set X periodic              = false
+    set X repetitions           = 2      
+    set Y extent                = 512e3  
+    set Y periodic              = true   
+    set Y repetitions           = 1
+    set Z extent                = 512e3  
+    set Z periodic              = false
+    set Z repetitions           = 1      
+  end
+end
+subsection Gravity model
+  set Model name = vertical 
+  subsection Vertical
+    set Magnitude = 9.81 
+  end
+end
+
+subsection Initial conditions
+  set Model name = function 
+  subsection Function
+    set Function constants  = reference_t=293, total_depth=512e3, crustal_depth=30e3, lithospheric_depth=120e3                                                                                                                                              
+    set Function expression = if (z>total_depth-crustal_depth,reference_t+(total_depth-z)*0.020, if (z>total_depth-lithospheric_depth,reference_t+400+(total_depth-crustal_depth-z)*0.0093, (reference_t+1330+(total_depth-lithospheric_depth-z)*0.00035))) 
+    set Variable names      = x,y,z                                   
+  end
+
+end
+
+subsection Material model
+  set Material averaging = none
+  set Model name         = nz 
+
+	#crust, lower_crust, weak_zone, lithospheric_mantle, sublithospheric_mantle
+  subsection nz model
+    set Densities             								= 2700, 2900, 3100, 3100, 3200
+    set Minimum viscosity                     = 1e21
+    set Maximum viscosity                     = 1e25		
+		set Mantle viscosity											= 1e20
+    set Reference viscosity                   = 1e21	
+		set Angle of internal friction            = 20,20,0,20,20
+		set Cohesion															= 1e7,1e7,0,1e10,1e8
+		set Thermal expansivities 								= 3.5e-5
+		
+		#new
+		set Material parameters										= 1e-26, 1e-24, 1, 1e-17, 1e-16
+		set Stress exponents											= 4,2.4,4,1,1
+		set Plastic exponents											=	1,1,1,2,1
+		set Temperature exponents									=	3
+		set Reference strain rate 								= 1e-15
+		set Activation energies										= 223e3, 219e3, 223e3, 535e3, 535e3
+		set Activation volumes										= 0, 0, 0, 1e-5, 1e-5
+	end
+end
+subsection Mesh refinement
+  set Initial adaptive refinement              = 1         
+  set Initial global refinement                = 4         
+  set Minimum refinement level                 = 4 
+  set Normalize individual refinement criteria = true
+  set Refinement criteria merge operation      = plus        
+  set Refinement criteria scaling factors      = 1           
+  set Refinement fraction                      = 0.4 
+	set Coarsening fraction                      = 0.35  
+	set Adapt by fraction of cells							 = true	
+  set Run postprocessors on initial refinement = true
+  set Strategy                                 = composition 
+  set Time steps between mesh refinement       = 10           
+  subsection Boundary
+    set Boundary refinement indicators = 
+  end
+  subsection Composition
+    set Compositional field scaling factors = 3,3,10,2,0 
+  end
+
+
+end
+subsection Model settings
+  set Tangential velocity boundary indicators = bottom, top
+  set Prescribed velocity boundary indicators = left: plate tectonics, right:plate tectonics#, #, front y:plate tectonics, back y:plate tectonics#, bottom:function
+	set Free surface boundary indicators 				= 
+end
+
+
+subsection Postprocess
+  set List of postprocessors = visualization, velocity statistics,velocity boundary statistics, composition statistics, basic statistics, depth average#, tracers
+	subsection Tracers
+		set Time between data output 			= 5e5
+		set Number of tracers 						= 1e6
+	end
+
+  subsection Visualization
+    set Interpolate output            = true                                              
+    set List of output variables      = strain rate, material properties, error indicator, viscosity ratio
+    set Number of grouped files       = 0
+    set Output format                 = vtu
+    set Time between graphical output = 1e5   
+		set Number of grouped files 			= 1		
+    subsection Dynamic Topography
+      set Subtract mean of dynamic topography = false
+    end
+    subsection Material properties
+      set List of material properties = density,thermal expansivity,specific heat,viscosity
+    end
+  end
+end
+
+# Use disccontinous composition bound preserving limiter
+subsection Discretization
+  set Use discontinuous composition discretization = true
+  subsection Stabilization parameters
+      set Use limiter for discontinuous composition solution = true # apply the limiter to the DG solutions
+      set Global composition maximum = 1.0, 1.0, 1.0, 1.0, 1.0
+      set Global composition minimum = 0.0, 0.0, 0.0, 0.0, 0.0
+  end
+end
+
+subsection Termination criteria
+  set Checkpoint on termination = false
+  set End step                  = 0
+  set Termination criteria      = end time#, end step
+  subsection Steady state velocity
+    set Maximum relative deviation = 0.05
+    set Time in steady state       = 1e6
+  end
+  subsection User request
+    set File name = terminate-aspect
+  end
+end
