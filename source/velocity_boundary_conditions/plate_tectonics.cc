@@ -66,8 +66,22 @@ namespace aspect
           else
             velocity[0]=-vel_x_out;
         }
-
-
+			
+			
+			if (dim==3)
+				{
+					if (x<width/2-wz_width/2)
+						{
+						velocity[1]=vel_y;
+						velocity[1]=-vel_y;
+						}
+					else
+					{
+						velocity[1]=-vel_y;
+						velocity[1]=vel_y;
+					}
+					
+				}			
 
       /*
       if (abs(velocity[1])<=1e-3)
