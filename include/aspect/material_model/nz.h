@@ -113,7 +113,7 @@ namespace aspect
         double average_value (const std::vector<double> &composition,
                               const std::vector<double> &parameter_values,
                               const enum averaging_scheme &average_type) const;
-        double reference_T;
+        std::vector<double> reference_T;
         double eta_min;
         double eta_max;
         double eta_reference;
