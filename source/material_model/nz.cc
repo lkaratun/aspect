@@ -312,7 +312,7 @@ namespace aspect
             {
               //not strictly correct if thermal expansivities are different, since we are interpreting
               //these compositions as volume fractions, but the error introduced should not be too bad.
-              const double temperature_factor = (1.0 - thermal_alpha[j] * (in.temperature[i] - reference_T));
+              const double temperature_factor = (1.0 - thermal_alpha[j] * (in.temperature[i] - reference_T[j]));
               density += volume_fractions[j] * densities[j] * temperature_factor;
             }
           out.densities[i] = density;
@@ -498,7 +498,7 @@ namespace aspect
                              "If only one values is given, then all use the same value.  Units: $kg / m^3$");
 
           prm.declare_entry ("Reference temperature", "293",
-                             Patterns::Double (0),
+                             Patterns::List(Patterns::Double(0)),
                              "The reference temperature $T_0$. The reference temperature is used "
                              "in both the density and viscosity formulas. Units: $K$.");
           prm.declare_entry ("Minimum viscosity", "1e18",
@@ -628,7 +628,7 @@ namespace aspect
       {
         prm.enter_subsection("nz model");
         {
-          reference_T                = prm.get_double ("Reference temperature");
+          
           eta_min                    = prm.get_double ("Minimum viscosity");
           eta_max                    = prm.get_double ("Maximum viscosity");
           eta_reference              = prm.get_double ("Reference viscosity");
@@ -640,8 +640,8 @@ namespace aspect
           num_plastic                = prm.get_double ("Number of compositional fields with plastic rheology");
           min_strain_rate            = prm.get_double ("Minimum strain rate");
           ref_strain_rate            = prm.get_double ("Reference strain rate");
-          if (thermal_viscosity_exponent!=0.0 && reference_T == 0.0)
-            AssertThrow(false, ExcMessage("Error: Material model simple with Thermal viscosity exponent can not have reference_T=0."));
+          // if (thermal_viscosity_exponent!=0.0 && reference_T == 0.0)
+            // AssertThrow(false, ExcMessage("Error: Material model simple with Thermal viscosity exponent can not have reference_T=0."));
 
           std::vector<double> x_values;
 
@@ -695,7 +695,7 @@ namespace aspect
           // Parse temeparture exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Temperature exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+                      ExcMessage("Length of Temperature exponents list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             nts.assign( n_fields , x_values[0]);
           else
@@ -713,7 +713,7 @@ namespace aspect
           // Parse material parameters
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material parameters")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+                      ExcMessage("Length of Material parameters list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             material_parameters.assign( n_fields , x_values[0]);
           else
@@ -725,7 +725,7 @@ namespace aspect
           // Parse angles of internal friction
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Angle of internal friction")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+                      ExcMessage("Length of Angle of internal friction list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             angle_if.assign( n_fields , x_values[0]);
           else
@@ -735,7 +735,7 @@ namespace aspect
           // Parse cohesions
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Cohesion")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
-                      ExcMessage("Length of nv list must be either one, or n_compositional_fields"));
+                      ExcMessage("Length of cohesion list must be either one, or n_compositional_fields"));
           if (x_values.size() == 1)
             cohesion.assign( n_fields , x_values[0]);
           else
@@ -752,7 +752,16 @@ namespace aspect
             viscosity_averaging = maximum_composition;
           else
             AssertThrow(false, ExcMessage("Not a valid viscosity averaging scheme"));
-
+					
+					//Parse reference temperature
+					x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Reference temperature")));
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of Reference temperature list must be either one, or n_compositional_fields"));
+          if (x_values.size() == 1)
+            reference_T.assign( n_fields , x_values[0]);
+          else
+            reference_T = x_values;
+					
         }
         prm.leave_subsection();
       }
