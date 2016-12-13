@@ -37,6 +37,9 @@
 #include <deal.II/numerics/data_out.h>
 
 #include <fstream>
+#include <iostream>
+
+
 
 
 
@@ -393,12 +396,23 @@ namespace aspect
     mesh_displacement_constraints.close();
   }
 
+  
+  
+	struct xu
+	{
+		double x;
+		double y;
+	};
+	bool xuCompare(const xu& firstElem, const xu& secondElem) 
+	{
+		return firstElem.x < secondElem.x;
+	}  
 	
 	template <int dim>
   void FreeSurfaceHandler<dim>::diffuse_surface(LinearAlgebra::Vector &output)
 	{
 		//std::cout<<"entered diffuse_surface\n";
-		
+		const unsigned int ts = sim.timestep_number;
 		LinearAlgebra::SparseMatrix system_matrix;
 		LinearAlgebra::Vector system_rhs, solution;
     system_rhs.reinit(mesh_locally_owned, sim.mpi_communicator);
@@ -482,6 +496,12 @@ namespace aspect
 		
 		//std::cout<<"Reached loop over cells\n";
 		
+		
+		typedef std::vector<xu> displacements_vector;
+		typedef std::vector<displacements_vector> displacements_matrix;
+		static displacements_matrix u;
+		u.push_back(displacements_vector());		
+		
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
 		{
@@ -505,10 +525,9 @@ namespace aspect
 						//Integrate over the cell by looping over quadrature points
 						for (unsigned int q_index=0; q_index<n_q_points; ++q_index)
 						{
+							double displacement = local_displacements[q_index];
 							for (unsigned int i=0; i<dofs_per_cell; ++i)
 							{
-								double displacement = local_displacements[q_index];
-								
 								//Set right hand side
 								cell_rhs(i) += fs_fe_face_values.shape_value (i, q_index) 
 													* displacement
@@ -531,6 +550,14 @@ namespace aspect
 										* fs_fe_face_values.JxW (q_index);            // need SURFACE gradient
 										
 							}		
+							
+							
+							const Point<dim> p = fs_fe_face_values.quadrature_point(q_index);
+							xu temp;
+							temp.x=p[0];
+							temp.y=p[dim-1];
+							u[ts].push_back(temp);							
+							
 						}
 
 						mass_matrix_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
@@ -559,6 +586,22 @@ namespace aspect
 						// }
 					}
 		}
+		// std::cout<<"ts = "<<ts<<"sim.timestep_number = "<<sim.timestep_number<<std::endl;
+		// std::cout<<"len (u[ts]) = "<<u[ts].size()<<std::endl;
+		std::sort(u[ts].begin(), u[ts].end(), xuCompare);
+		// for (unsigned int j=0; j<u[ts].size(); ++j) 
+			// std::cout<<u[ts][j].x<<" ";
+		std::ofstream myfile("displacements.txt", std::ios::app);
+		
+		for (unsigned int j=0; j<u[ts].size(); ++j) 
+			{
+				myfile << u[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
+				myfile << u[ts][j].y<<std::endl;
+			}
+		myfile.close();		
+		
+		
+		
 		//std::cout<<"Exit loop over cells\n";
 		//Generate a list of pairs of global degree of freedom numbers (on the boundary) 
 		//and their boundary values (which are zero here for all entries)
@@ -613,20 +656,112 @@ namespace aspect
 		// std::cout<<"displacements size:" <<displacements.size()<<"\n";
 		output_temp = solution;
 		
-		output_temp -= displacements;
+		output_temp -= displacements; //resulting elevation - initial elevation
 		//UNCOMMENT//output_temp.sadd(1,displacements);
 		//output_temp.sadd(1/sim.time_step,);
+		
+		//displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
+		
+		//=====
+		/*
+		//real solution
+		//Interpolate the mesh vertex velocity onto the Stokes velocity system for use in ALE corrections
+		LinearAlgebra::Vector distributed_current_displacements;
+		distributed_current_displacements.reinit(mesh_locally_owned, sim.mpi_communicator);
+
+		const std::vector<Point<dim> > support_points
+			= free_surface_fe.base_element(0).get_unit_support_points();
+
+		Quadrature<dim> quad(support_points);
+		UpdateFlags update_flags2 = UpdateFlags(update_quadrature_points);
+		FEValues<dim> fe_values (free_surface_fe, quad, update_flags2);
+		//const unsigned int n_q_points = fe_values.n_quadrature_points;
+		//const unsigned int dofs_per_cell = fe_values.dofs_per_cell;
+
+		std::vector<types::global_dof_index> cell_dof_indices (dofs_per_cell);
+		FEValuesExtractors::Vector extract_displacement(0);
+		std::vector<Tensor<1,dim> > displacement_values(n_q_points);
+		
+		
+		std::ofstream myfile;
+		myfile.open ("disp_file.txt");
+		myfile << "Displacements, timestep "<<sim.time_step<<"\n";
+		
+		
+		
+		cell = free_surface_dof_handler.begin_active();
+		endc= free_surface_dof_handler.end();
+		
+		for (; cell!=endc; ++cell)
+			if (cell->is_locally_owned())
+			{
+				cell->get_dof_indices (cell_dof_indices);
+				fe_values.reinit (cell);
+				for (unsigned int j=0; j<n_q_points; ++j)
+				{
+					const Point<dim> p = fe_values.quadrature_point(j);
+					Point<dim> displacement;
+					// displacement[0] = 0.;
+					// displacement[1] = 0.;
+					// displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
+					for (unsigned int dir=0; dir<dim; ++dir)
+					{
+						unsigned int support_point_index
+							= free_surface_fe.component_to_system_index(dir, j);
+						displacement[dir] = distributed_current_displacements[cell_dof_indices[support_point_index]];
+						//myfile << displacement[dir];
+					}
+					myfile << "\n";
+				}
+			}
+		
+		
+		myfile.close();
+		
+		
+		
+		//Analytical solution
+		std::vector<double> u;
+		double t = sim.time;//->get_time();
+		double eps = 1e-16;
+		double series = 0;
+		double max_x = 1;//sim.geometry_model->get_extents()[0];
+		for (int i = 0; i<=max_x; x++)
+		{
+			for (int n=1; n<=100; n++)
+			{
+				double term = exp(-pow((2*n-1),2)*pow(M_PI,2)*t) * std::sin((2*n-1)*M_PI*x)/(2*n-1);
+				series += term;
+				if (term < eps)
+					break;
+			}
+			
+			
+			u[x] = 4 * u0[] / M_PI * series;
+		}
+		*/
+		
+		//Compare obtained solution with analytical solution
+		
+		
+		
+		
 		
 		
 		//std::cout<<"Reached last for loop\n";
 		//for (unsigned int i = 0; i < solution.size(); i++)
 		//{
 			//output_temp[i] = solution[i];// - displacements[i];
-			if (sim.time_step)
-				output_temp /= sim.time_step;
+		if (sim.time_step)
+			output_temp /= sim.time_step;
 		//}
 		//std::cout<<"Exit last for loop\n";
 		output=output_temp;
+		
+		
+		
+		
+		
 		
 
 /*  cg.solve (mesh_matrix, velocity_solution, rhs, preconditioner_stiffness);
@@ -975,6 +1110,8 @@ namespace aspect
     mesh_velocity = distributed_mesh_velocity;
   }
 
+
+
 	
   template <int dim>
   void FreeSurfaceHandler<dim>::setup_dofs() //called from core every mesh repartitioning
@@ -1010,62 +1147,106 @@ namespace aspect
 
     //if we are just starting, we need to initialize the mesh displacement vector.
     
-		//Here we can set up initial topography
-		if (sim.timestep_number == 0)
-      //mesh_displacements = 0.;
-			{
-				//Interpolate the mesh vertex velocity onto the Stokes velocity system for use in ALE corrections
-				LinearAlgebra::Vector distributed_initial_displacements;
-				distributed_initial_displacements.reinit(mesh_locally_owned, sim.mpi_communicator);
+	//Here we can set up initial topography
+	if (sim.timestep_number == 0)
+  //mesh_displacements = 0.;
+	{
+		//Interpolate the mesh vertex velocity onto the Stokes velocity system for use in ALE corrections
+		LinearAlgebra::Vector distributed_initial_displacements;
+		distributed_initial_displacements.reinit(mesh_locally_owned, sim.mpi_communicator);
 
-				const std::vector<Point<dim> > support_points
-					= free_surface_fe.base_element(0).get_unit_support_points();
+		const std::vector<Point<dim> > support_points
+			= free_surface_fe.base_element(0).get_unit_support_points();
 
-				Quadrature<dim> quad(support_points);
-				UpdateFlags update_flags = UpdateFlags(update_quadrature_points);
-				FEValues<dim> fe_values (free_surface_fe, quad, update_flags);
-				//FEFaceValues<dim> fe_face_values (*sim.mapping, sim.finite_element, quadrature_formula, update_values | update_gradients | update_JxW_values)
-				const unsigned int n_q_points = fe_values.n_quadrature_points,
-													 dofs_per_cell = fe_values.dofs_per_cell;
-				// std::cout<<"n_q_points="<<n_q_points<<"\n";
-				// std::cout<<"dim="<<dim<<"\n";
-				// std::cout<<"length of support_points="<<support_points.size()<<"\n";
+		Quadrature<dim> quad(support_points);
+		UpdateFlags update_flags = UpdateFlags(update_quadrature_points);
+		FEValues<dim> fe_values (free_surface_fe, quad, update_flags);
+		//FEFaceValues<dim> fe_face_values (*sim.mapping, sim.finite_element, quadrature_formula, update_values | update_gradients | update_JxW_values)
+		const unsigned int n_q_points = fe_values.n_quadrature_points,
+											 dofs_per_cell = fe_values.dofs_per_cell;
+		// std::cout<<"n_q_points="<<n_q_points<<"\n";
+		// std::cout<<"dim="<<dim<<"\n";
+		// std::cout<<"length of support_points="<<support_points.size()<<"\n";
 
-				std::vector<types::global_dof_index> cell_dof_indices (dofs_per_cell);
-				FEValuesExtractors::Vector extract_displacement(0);
-				std::vector<Tensor<1,dim> > displacement_values(n_q_points);
-				
-				typename DoFHandler<dim>::active_cell_iterator
-				cell = free_surface_dof_handler.begin_active(), 	endc= free_surface_dof_handler.end();
-				
-				for (; cell!=endc; ++cell)
-					if (cell->is_locally_owned())
-						{
-							cell->get_dof_indices (cell_dof_indices);
+		std::vector<types::global_dof_index> cell_dof_indices (dofs_per_cell);
+		FEValuesExtractors::Vector extract_displacement(0);
+		std::vector<Tensor<1,dim> > displacement_values(n_q_points);
+		
+		typename DoFHandler<dim>::active_cell_iterator
+		cell = free_surface_dof_handler.begin_active(), 	endc= free_surface_dof_handler.end();
+		
+		//===
+		
+			  //added by lev for benchmarking purposes
 
-							fe_values.reinit (cell);
-							for (unsigned int j=0; j<n_q_points; ++j)
-							  {
-									const Point<dim> p = fe_values.quadrature_point(j);
-									Point<dim> displacement;
-									displacement[0] = 0.;
-									displacement[1] = 0.;
-									displacement[dim-1] = p[dim-1]*0.05*std::sin(2*p[0]*M_PI);
-								  for (unsigned int dir=0; dir<dim; ++dir)
-									{
-										unsigned int support_point_index
-											= free_surface_fe.component_to_system_index(/*velocity component=*/ dir,
-																																	/*dof index within component=*/ j);
-										distributed_initial_displacements[cell_dof_indices[support_point_index]] = displacement[dir];
-									}
-								}
-						}
+		// typedef std::vector<xu> displacements_vector;
+		// typedef std::vector<displacements_vector> displacements_matrix;
+		// static displacements_matrix u;
+		// u.push_back(displacements_vector());
+		
+		
+		
+		for (; cell!=endc; ++cell)
+			if (cell->is_locally_owned())
+				{
+					cell->get_dof_indices (cell_dof_indices);
 
-				distributed_initial_displacements.compress(VectorOperation::insert);
-				mesh_displacements = distributed_initial_displacements;
-				
-				//std::cout<<"Setup_DOFs complete\n";
-			}
+					fe_values.reinit (cell);
+					for (unsigned int j=0; j<n_q_points; ++j)
+					{
+						const Point<dim> p = fe_values.quadrature_point(j);
+						Point<dim> displacement;
+						displacement[0] = 0.;
+						displacement[1] = 0.;
+						displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
+						unsigned int support_point_index;
+						for (unsigned int dir=0; dir<dim; ++dir)
+							{
+								
+								support_point_index = free_surface_fe.component_to_system_index(/*velocity component=*/ dir,
+																															/*dof index within component=*/ j);
+								distributed_initial_displacements[cell_dof_indices[support_point_index]] = displacement[dir];
+								
+							}
+						// xu temp;
+						// temp.x=p[0];
+						// temp.y=displacement[dim-1];
+						// u[0].push_back(temp);
+					}
+				}
+		//std::cout<<"indx = "<<indx<<std::endl;
+		// std::cout<<"len (u[0]) = "<<u[0].size()<<std::endl;
+		
+		// std::sort(u[0].begin(), u[0].end(), xuCompare);
+		
+		// for (unsigned int j=0; j<u[0].size(); ++j) 
+			// std::cout<<u[0][j].x<<" ";
+		// std::ofstream myfile("displacements.txt", std::ios::app);
+		
+		// /* fancy way but can't assign xu to string
+		// std::ostream_iterator<int> output_iterator(myfile, "\t");
+		// myfile << "Displacements, timestep "<<sim.time_step<<std::endl;	
+		
+		
+		// for(typename displacements_matrix::const_iterator it=u.begin(); it!=u.end(); ++it) 
+		// {
+			// std::copy(it->begin(), it->end(), output_iterator);//std::ostream_iterator<int>(std::cout, " "));
+			// std::cout << std::endl;
+		// }
+		// */
+		// //for(unsigned int i=0; i<u.size(); ++i) 
+			// for (unsigned int j=0; j<u[0].size(); ++j) 
+				// {
+					// myfile << u[0][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
+					// myfile << u[0][j].y<<std::endl;
+				// }
+		// myfile.close();
+
+		distributed_initial_displacements.compress(VectorOperation::insert);
+		mesh_displacements = distributed_initial_displacements;
+		
+		//std::cout<<"Setup_DOFs complete\n";
+	}
 
     // We would like to make sure that the mesh stays conforming upon
     // redistribution, so we construct mesh_vertex_constraints, which

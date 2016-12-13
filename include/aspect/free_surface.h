@@ -99,6 +99,22 @@ namespace aspect
        * Parse parameters for the free surface handling.
        */
       void parse_parameters (ParameterHandler &prm);
+	  
+	  // //added by lev for benchmarking purposes
+	  // struct xu
+      // {
+        // double x;
+		// double y;
+      // };
+	  // typedef std::vector<xu> displacements_vector;
+	  // typedef std::vector<displacements_vector> displacements_matrix;
+	  // static displacements_matrix u;
+	  	  // //std::vector<xy> u0;
+		  // //std::vector<std::vector<xy>> u;
+		  
+		  
+		  
+	  
 
 
       /**
@@ -241,6 +257,9 @@ namespace aspect
 
       friend class Simulator<dim>;
       friend class SimulatorAccess<dim>;
+	  
+		  
+		  
   };
 }
 
