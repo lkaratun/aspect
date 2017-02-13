@@ -65,7 +65,10 @@ namespace aspect
             velocity[0]=-(vel_x_out+(vel_x_in-vel_x_out)*(z-(total_thickness-lithospheric_thickness-transition_zone_mantle))/(transition_zone+transition_zone_mantle));
           else
             velocity[0]=-vel_x_out;
-        }
+        
+		  if (assymetric)
+			velocity[0] = 0;
+		}
 			
 			
 			if (dim==3)
@@ -83,6 +86,10 @@ namespace aspect
 					
 				}			
 
+				
+
+		
+				
       /*
       if (abs(velocity[1])<=1e-3)
       {}
@@ -273,6 +280,9 @@ namespace aspect
           prm.declare_entry ("Weak zone angle", "45",
                              Patterns::Double (0),
                              "Angle of the weak zone (Alpine fault). 0 is horizontal, 90 is vertical Units: $deg$.");
+		  prm.declare_entry ("Assymetric", "0",
+                             Patterns::Double (0),
+                             "0 is symmetric convergence, 1 is assimetric");
 
         }
         prm.leave_subsection();
@@ -301,6 +311,7 @@ namespace aspect
           total_thickness             = prm.get_double ("Total height");
           lithospheric_thickness      = prm.get_double ("Lithospheric thickness")+prm.get_double ("Transition zone height");
           transition_zone             = prm.get_double ("Transition zone height");
+		  assymetric	              = prm.get_double ("Assymetric");
         }
         prm.leave_subsection();
       }

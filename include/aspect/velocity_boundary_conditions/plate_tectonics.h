@@ -75,6 +75,7 @@ namespace aspect
         double lithospheric_thickness;
         double transition_zone;
         double alfa;
+		double assymetric;
 
 
 
