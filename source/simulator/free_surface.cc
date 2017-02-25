@@ -318,7 +318,7 @@ namespace aspect
     for (periodic_boundary_pairs::iterator p = pbp.begin(); p != pbp.end(); ++p)
       DoFTools::make_periodicity_constraints(free_surface_dof_handler, (*p).first.first, (*p).first.second, (*p).second, mesh_displacement_constraints);
 
-    // Zero out the displacement for the zero-velocity boundary indicators
+    //Zero out the displacement for the zero-velocity boundary indicators
     for (std::set<types::boundary_id>::const_iterator p = sim.parameters.zero_velocity_boundary_indicators.begin();
          p != sim.parameters.zero_velocity_boundary_indicators.end(); ++p)
       VectorTools::interpolate_boundary_values (free_surface_dof_handler, *p,
@@ -328,13 +328,57 @@ namespace aspect
     // if the boundary is not in the set of tangential mesh boundaries
     for (std::map<types::boundary_id, std::pair<std::string, std::string> >::const_iterator p = sim.parameters.prescribed_velocity_boundary_indicators.begin();
          p != sim.parameters.prescribed_velocity_boundary_indicators.end(); ++p)
-      {
-        if (tangential_mesh_boundary_indicators.find(p->first) == tangential_mesh_boundary_indicators.end())
-          {
-            VectorTools::interpolate_boundary_values (free_surface_dof_handler, p->first,
-                                                      ZeroFunction<dim>(dim), mesh_displacement_constraints);
-          }
-      }
+		{
+			/*if (tangential_mesh_boundary_indicators.find(p->first) == tangential_mesh_boundary_indicators.end())
+			  {
+				VectorTools::interpolate_boundary_values (free_surface_dof_handler, p->first,
+														  ZeroFunction<dim>(dim), mesh_displacement_constraints);
+			  } */
+		  
+		  
+			// std::vector<bool> mask(sim.introspection.component_masks.velocities.size(), false);
+			// std::cout<<"Length of mask = "<<mask.size()<<std::endl;
+			// const std::string &comp = sim.parameters.prescribed_velocity_boundary_indicators[p->first].first;
+
+			// if (comp.length()>0)
+			// {
+			  // for (std::string::const_iterator direction=comp.begin(); direction!=comp.end(); ++direction)
+				// {
+				  // switch (*direction)
+					// {
+					  // case 'x':
+						// mask[sim.introspection.component_indices.velocities[0]] = true;
+						// break;
+					  // case 'y':
+						// mask[sim.introspection.component_indices.velocities[1]] = true;
+						// break;
+					  // case 'z':
+						// // we must be in 3d, or 'z' should never have gotten through
+						// Assert (dim==3, ExcInternalError());
+						// if (dim==3)
+						  // mask[sim.introspection.component_indices.velocities[2]] = true;
+						// break;
+					  // default:
+						// Assert (false, ExcInternalError());
+					// }
+				// }
+			// }
+			// else
+			// {
+			  // // no mask given -- take all velocities
+			  // for (unsigned int i=0; i<sim.introspection.component_masks.velocities.size(); ++i)
+				// mask[i]=sim.introspection.component_masks.velocities[i];
+			// }
+
+			// std::cout<<"Length of mask = "<<mask.size()<<std::endl;
+			// VectorTools::interpolate_boundary_values (free_surface_dof_handler,//sim.dof_handler,
+														// p->first,
+														// ZeroFunction<dim>(dim),
+														// mesh_displacement_constraints,
+														// mask); 
+		  
+		}
+	  
 
     // Zero out the displacement for the traction boundaries
     // if the boundary is not in the set of tangential mesh boundaries
@@ -413,6 +457,7 @@ namespace aspect
 	{
 		//std::cout<<"entered diffuse_surface\n";
 		const unsigned int ts = sim.timestep_number;
+		std::cout <<"Time = " <<sim.time <<std::endl;
 		LinearAlgebra::SparseMatrix system_matrix;
 		LinearAlgebra::Vector system_rhs, solution;
     system_rhs.reinit(mesh_locally_owned, sim.mpi_communicator);
@@ -465,16 +510,34 @@ namespace aspect
 		
 		
 		
-		const double diffusivity = 1e-3;		
+		const double diffusivity = 1e-4;		
 		QGauss<dim-1>  face_quadrature(free_surface_fe.degree+1);
+		QGauss<dim>  quadrature(free_surface_fe.degree+1);
     UpdateFlags update_flags = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points | update_normal_vectors);
+	UpdateFlags update_flags2 = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points );
     FEFaceValues<dim> fs_fe_face_values (*sim.mapping, free_surface_fe, face_quadrature, update_flags);
+	FEValues<dim> fs_fe_values (*sim.mapping, free_surface_fe, quadrature, update_flags2);
+	FEValues<dim> fe_values (*sim.mapping, sim.finite_element, quadrature, update_flags2);
+	FEFaceValues<dim> fe_face_values (*sim.mapping, sim.finite_element, face_quadrature, update_flags);
 		LinearAlgebra::Vector displacements = this->mesh_displacements;//free_surface_dof_handler.mesh_displacements;
 
-		//Shortcuts
-		const unsigned int   dofs_per_cell = free_surface_fe.dofs_per_cell;
 		
-		const unsigned int n_q_points = fs_fe_face_values.n_quadrature_points;
+		//Shortcuts
+		const unsigned int dofs_per_cell = free_surface_fe.dofs_per_cell;
+		const unsigned int dofs_per_cell_reg = sim.finite_element.dofs_per_cell;
+		const unsigned int dofs_per_face = free_surface_fe.dofs_per_face;
+		
+		//const unsigned int dofs_per_cell = free_surface_fe.dofs_per_cell;
+		std::cout<<"dofs_per_cell="<<dofs_per_cell<<std::endl;
+		std::cout<<"dofs_per_cell_reg="<<dofs_per_cell_reg<<std::endl;
+		std::cout<<"dofs_per_face="<<dofs_per_face<<std::endl;
+		
+		const unsigned int n_q_points = fs_fe_values.n_quadrature_points;
+		const unsigned int n_q_points_reg = fe_values.n_quadrature_points;
+		const unsigned int n_face_q_points = fs_fe_face_values.n_quadrature_points;
+		std::cout<<"n_q_points = "<<n_q_points<<std::endl;
+		std::cout<<"n_q_points_reg = "<<n_q_points_reg<<std::endl;
+		std::cout<<"n_face_q_points = "<<n_face_q_points<<std::endl;
 		//Create local matrices
 		FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
 		Vector<double>       cell_rhs (dofs_per_cell);
@@ -487,10 +550,11 @@ namespace aspect
 		cell = sim.dof_handler.begin_active(),
 		endc = sim.dof_handler.end();
 		typename DoFHandler<dim>::active_cell_iterator
-    fscell = free_surface_dof_handler.begin_active();
+		fscell = free_surface_dof_handler.begin_active(),
+		endfscell = free_surface_dof_handler.end();
 		
 		FEValuesExtractors::Scalar  vertical_displacement(dim-1);
-		std::vector<double> local_displacements (n_q_points);
+		std::vector<double> local_displacements (n_face_q_points);
 		
 		
 		
@@ -500,7 +564,11 @@ namespace aspect
 		typedef std::vector<xu> displacements_vector;
 		typedef std::vector<displacements_vector> displacements_matrix;
 		static displacements_matrix u;
-		u.push_back(displacements_vector());		
+		u.push_back(displacements_vector());	
+
+
+		std::vector<double> disp;
+		double max_rhs = -999;
 		
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
@@ -509,8 +577,14 @@ namespace aspect
 			if (cell->at_boundary() /* && cell->boundary_id()==dim-1 */ && cell->is_locally_owned())
 				for (unsigned int face_no=0; face_no<GeometryInfo<dim>::faces_per_cell; ++face_no)
 					//...and specifially, in faces lying on the boundary
-					if (cell->face(face_no)->at_boundary() && cell->face(face_no)->boundary_id()==dim*2-1)
 					{
+					//if (cell->face(face_no)->at_boundary() && cell->face(face_no)->boundary_id()==dim*2-1)
+					const types::boundary_id boundary_indicator = cell->face(face_no)->boundary_id();
+					if (sim.parameters.free_surface_boundary_indicators.find(boundary_indicator)
+						== sim.parameters.free_surface_boundary_indicators.end())
+						continue;	
+				
+				
 						//recompute values, gradients of the shape functions and determinants of the Jacobian matrices for the current cell
 						fs_fe_face_values.reinit (fscell, face_no);
 						//Reset the local cell's contributions to global matrix
@@ -522,48 +596,109 @@ namespace aspect
 						fs_fe_face_values[vertical_displacement].get_function_values (displacements,
 																						local_displacements);
 						
-						//Integrate over the cell by looping over quadrature points
-						for (unsigned int q_index=0; q_index<n_q_points; ++q_index)
+						
+						
+						
+						//Integrate over the fscell by looping over quadrature points
+						for (unsigned int q_index=0; q_index<n_face_q_points; ++q_index)
 						{
 							double displacement = local_displacements[q_index];
+							disp.push_back(displacement);
+							
+							//if (sim.timestep_number==0) std::cout<<fs_fe_face_values.JxW (q_index)<<" ";
+							if (sim.timestep_number==0) std::cout<<fs_fe_face_values.JxW (q_index)<<" ";
+							
+							
+							
+							
 							for (unsigned int i=0; i<dofs_per_cell; ++i)
 							{
+								if (free_surface_fe.system_to_component_index(i).first != dim-1)
+									continue;
+								//if (sim.timestep_number==0) std::cout<<"dof.no.="<<i<<" ";
+								//if (sim.timestep_number==0) std::cout<<"c.i="<<free_surface_fe.system_to_component_index(i).first<<" ";
 								//Set right hand side
 								cell_rhs(i) += fs_fe_face_values.shape_value (i, q_index) 
-													* displacement
-													* fs_fe_face_values.JxW (q_index);
+												* displacement 
+												* fs_fe_face_values.JxW (q_index);
+								if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
+
+								
 								//Set local matrix elements					
 								Tensor<2, dim, double> rot;
 								outer_product(rot, fs_fe_face_values.normal_vector(q_index), fs_fe_face_values.normal_vector(q_index));
 								Tensor<2, dim, double> I;
 								for (int k = 0; k<dim; k++)
 									I[k][k]=1;
+								// if (fs_fe_face_values.normal_vector(q_index)[0] || fs_fe_face_values.normal_vector(q_index)[1])
+									// std::cout<<fs_fe_face_values.normal_vector(q_index)[0]<<" "<<fs_fe_face_values.normal_vector(q_index)[1]<<std::endl;
+								//normal vectors are fine
+
+								//if (rot.norm())
+									//std::cout<<rot[0][0]<<" "<<rot[0][1]<<rot[1][0]<<" "<<rot[1][1]<<std::endl;
+
 								
 								//rot =  dealii::identity_tensor<dim> () - rot;
 								rot =  I - rot;
 								
 								for (unsigned int j=0; j<dofs_per_cell; ++j)
+								{
+									if (free_surface_fe.system_to_component_index(j).first != dim-1)
+										continue;
+									/*fs_fe_face_values.shape_grad (i|j, q_index) - gradients of shape functions*/
 									
-									/*fs_fe_face_values.shape_grad (i|j, q_index) - gradients of test functions*/
-									cell_matrix(i,j) += (sim.time_step * diffusivity * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
-										+ (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
+									cell_matrix(i,j) += (sim.time_step*diffusivity * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
+										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
 										* fs_fe_face_values.JxW (q_index);            // need SURFACE gradient
-										
+									// if (sim.time_step*diffusivity * (fs_fe_face_values.shape_grad (i, q_index)  * fs_fe_face_values.shape_grad (j, q_index))> 1e-13)
+										// std::cout<<sim.time_step*diffusivity * (fs_fe_face_values.shape_grad (i, q_index)  * fs_fe_face_values.shape_grad (j, q_index)) <<" ";
+									//around 1e-15
+									//if (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index) > 1e-13)
+										//std::cout<<fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)<<" ";
+									//around 0.1~0.6
+									// if (fs_fe_face_values.shape_grad (i, q_index).norm()  > 1e-13)
+										// std::cout<<" q_index="<<q_index<<" i="<<i<<" grad="<<fs_fe_face_values.shape_grad (i, q_index);
+									//around 1
+									
+									//no diffusion
+									// cell_matrix(i,j) += (fs_fe_face_values.shape_value(i, q_index) * fs_fe_face_values.shape_value(j, q_index))
+										// * fs_fe_face_values.JxW (q_index);            // need SURFACE gradient				
+									
+								}	
 							}		
 							
 							
 							const Point<dim> p = fs_fe_face_values.quadrature_point(q_index);
 							xu temp;
 							temp.x=p[0];
-							temp.y=p[dim-1];
+							temp.y=displacement;//p[dim-1];
 							u[ts].push_back(temp);							
 							
 						}
 
-						mass_matrix_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
-                                                                  local_dof_indices, system_matrix, system_rhs, false);
+						
 																																	
 																																
+						if (sim.timestep_number == 0)	
+						{							
+							std::ofstream myfile_matrix("matrix", std::ios::app);
+							
+							for (unsigned int i=0; i<cell_matrix.m(); i++) 
+							{	
+								for (unsigned int j=0; j<cell_matrix.n(); j++)
+									myfile_matrix << cell_matrix[i][j]<<" ";
+								myfile_matrix <<std::endl;
+							}
+							myfile_matrix.close();		
+
+							std::ofstream myfile_rhs("rhs", std::ios::app);
+							for (unsigned int i=0; i<cell_rhs.size(); ++i) 
+								myfile_rhs << cell_rhs[i]<<" ";
+							myfile_rhs.close();							
+						}
+						
+						mass_matrix_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
+                                                                  local_dof_indices, system_matrix, system_rhs, false);
 						
 						//std::cout<<"system_matrix.m()="<<system_matrix.m()<<"\n";
 						//std::cout<<"system_matrix.n()="<<system_matrix.n()<<"\n";
@@ -591,13 +726,25 @@ namespace aspect
 		std::sort(u[ts].begin(), u[ts].end(), xuCompare);
 		// for (unsigned int j=0; j<u[ts].size(); ++j) 
 			// std::cout<<u[ts][j].x<<" ";
-		std::ofstream myfile("displacements.txt", std::ios::app);
+		
+		
+		
+		std::ofstream myfile("u", std::ios::app);
+		std::cout<<"Max disp = "<<*max_element(std::begin(disp), std::end(disp))<<std::endl;
+		
+		
+		
+		for (int i = 0; i<system_rhs.size();i++)
+			if (max_rhs<system_rhs(i)) max_rhs=system_rhs(i);
+		std::cout<<"Max rhs = "<<max_rhs<<std::endl;
+		//std::cout<<"Max rhs = "<<*max_element(std::begin(system_rhs), std::end(system_rhs))<<std::endl;
 		
 		for (unsigned int j=0; j<u[ts].size(); ++j) 
 			{
 				myfile << u[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
 				myfile << u[ts][j].y<<std::endl;
 			}
+		myfile << std::endl;
 		myfile.close();		
 		
 		
@@ -635,11 +782,11 @@ namespace aspect
 																				system_rhs);		
 		*/
 		system_rhs.compress (VectorOperation::add);
-    system_matrix.compress(VectorOperation::add);	
+		system_matrix.compress(VectorOperation::add);	
 		
 		//Set parameters for the solver: (max_iterations, tolerance); 
 		//std::cout<<"rhs size="<<system_rhs.size()<<"\n";
-		SolverControl solver_control (10000, 1e-10);
+		SolverControl solver_control (100000, 1e-20);
 		//SolverControl solver_control (5*system_rhs.size(), sim.parameters.linear_stokes_solver_tolerance*system_rhs.l2_norm());
 		//Create solver itself
 		SolverCG<LinearAlgebra::Vector> solver (solver_control);
@@ -647,7 +794,9 @@ namespace aspect
 		
 		solver.solve (system_matrix, solution, system_rhs,
 									PreconditionIdentity());
-    mass_matrix_constraints.distribute (solution);
+									
+		std::cout<<"Diffusion equation solved in "<<solver_control.last_step() << " iterations."<< std::endl;							
+		mass_matrix_constraints.distribute (solution);
 		
 		LinearAlgebra::Vector output_temp(mesh_locally_owned, mesh_locally_relevant, sim.mpi_communicator);
 		// std::cout<<"output_temp size:" <<output_temp.size()<<"\n";
@@ -655,6 +804,19 @@ namespace aspect
 		// std::cout<<"output size:" <<output.size()<<"\n";
 		// std::cout<<"displacements size:" <<displacements.size()<<"\n";
 		output_temp = solution;
+		//std::cout<<"solution size ="<<solution.size()<<std::endl;
+		//std::cout<<"rhs size ="<<system_rhs.size()<<std::endl;
+		std::ofstream file_sol("sol", std::ios::app);
+		for (int i =0; i<solution.size();i++)
+			file_sol << solution[i]<<" ";
+		file_sol << std::endl;
+		file_sol.close();
+			
+		std::ofstream file_system_rhs("system_rhs", std::ios::app);
+		for (int i =0; i<system_rhs.size();i++)
+			file_system_rhs << system_rhs[i]<<" ";
+		file_system_rhs << std::endl;
+		file_system_rhs.close();			
 		
 		output_temp -= displacements; //resulting elevation - initial elevation
 		//UNCOMMENT//output_temp.sadd(1,displacements);
@@ -663,87 +825,71 @@ namespace aspect
 		//displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
 		
 		//=====
-		/*
-		//real solution
-		//Interpolate the mesh vertex velocity onto the Stokes velocity system for use in ALE corrections
-		LinearAlgebra::Vector distributed_current_displacements;
-		distributed_current_displacements.reinit(mesh_locally_owned, sim.mpi_communicator);
-
-		const std::vector<Point<dim> > support_points
-			= free_surface_fe.base_element(0).get_unit_support_points();
-
-		Quadrature<dim> quad(support_points);
-		UpdateFlags update_flags2 = UpdateFlags(update_quadrature_points);
-		FEValues<dim> fe_values (free_surface_fe, quad, update_flags2);
-		//const unsigned int n_q_points = fe_values.n_quadrature_points;
-		//const unsigned int dofs_per_cell = fe_values.dofs_per_cell;
-
-		std::vector<types::global_dof_index> cell_dof_indices (dofs_per_cell);
-		FEValuesExtractors::Vector extract_displacement(0);
-		std::vector<Tensor<1,dim> > displacement_values(n_q_points);
-		
-		
-		std::ofstream myfile;
-		myfile.open ("disp_file.txt");
-		myfile << "Displacements, timestep "<<sim.time_step<<"\n";
-		
-		
-		
-		cell = free_surface_dof_handler.begin_active();
-		endc= free_surface_dof_handler.end();
-		
-		for (; cell!=endc; ++cell)
-			if (cell->is_locally_owned())
-			{
-				cell->get_dof_indices (cell_dof_indices);
-				fe_values.reinit (cell);
-				for (unsigned int j=0; j<n_q_points; ++j)
-				{
-					const Point<dim> p = fe_values.quadrature_point(j);
-					Point<dim> displacement;
-					// displacement[0] = 0.;
-					// displacement[1] = 0.;
-					// displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
-					for (unsigned int dir=0; dir<dim; ++dir)
-					{
-						unsigned int support_point_index
-							= free_surface_fe.component_to_system_index(dir, j);
-						displacement[dir] = distributed_current_displacements[cell_dof_indices[support_point_index]];
-						//myfile << displacement[dir];
-					}
-					myfile << "\n";
-				}
-			}
-		
-		
-		myfile.close();
-		
-		
 		
 		//Analytical solution
-		std::vector<double> u;
-		double t = sim.time;//->get_time();
-		double eps = 1e-16;
-		double series = 0;
-		double max_x = 1;//sim.geometry_model->get_extents()[0];
-		for (int i = 0; i<=max_x; x++)
+		//const double L = 1; //x extent of the domain
+		//const double T = L*L / diffusivity; //charachteristic temperature
+		//const double U = 0.1; //initial displacement amplitude
+		
+		static displacements_matrix ua;
+		ua.push_back(displacements_vector());
+		
+		
+		
+		double eps = 1e-10;
+		
+		//double max_x = 1;//sim.geometry_model->get_extents()[0];
+		for (int i = 0; i<=u[0].size(); i++)
 		{
-			for (int n=1; n<=100; n++)
+			xu temp;
+			temp.x=u[ts][i].x;
+			
+			int n = 1;
+			double series = 0;
+			for (; n<=10000000; n++)
 			{
-				double term = exp(-pow((2*n-1),2)*pow(M_PI,2)*t) * std::sin((2*n-1)*M_PI*x)/(2*n-1);
+				double term = exp(-pow((2*n-1),2)*pow(M_PI,2)*(sim.time/10)) * std::sin((2*n-1)*M_PI*temp.x)/(2*n-1);
+				
+				
 				series += term;
-				if (term < eps)
+				if (std::abs(term) < eps)
+				{
+					//std::cout << "last term = "<<term <<" ";
 					break;
+				}
 			}
+			//if (i==0)
+				//std::cout << std::endl<<"n (series)= " <<n<<" series = "<< series <<std::endl;
+			
+			if (ts==0)
+				temp.y = u[ts][i].y;
+			else
+				temp.y=4 * u[0][i].y * series / M_PI ;
+			
+			ua[ts].push_back(temp);		
 			
 			
-			u[x] = 4 * u0[] / M_PI * series;
 		}
-		*/
+		
+		std::ofstream myfile2("ua", std::ios::app);
+		
+		if (ts<2)
+		for (unsigned int j=0; j<u[ts].size(); ++j) 
+			{
+				myfile2 << ua[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
+				myfile2 << ua[ts][j].y<<std::endl;
+			}
+		myfile2.close();			
+		
 		
 		//Compare obtained solution with analytical solution
 		
 		
+		
+
+		
+		//std::ofstream out ("sparsity_pattern2.svg");
+		//sparsity_pattern.print_svg (out);		
 		
 		
 		
@@ -937,6 +1083,15 @@ namespace aspect
 
     mass_matrix_constraints.distribute (dist_solution);
     output = dist_solution;
+	
+	std::ofstream file_sol("stokes_sol", std::ios::app);
+	for (int i =0; i<output.size();i++)
+		file_sol << output[i]<<" ";
+	file_sol << std::endl;
+	file_sol.close();	
+	
+	
+	
   }
 
 
@@ -1214,6 +1369,9 @@ namespace aspect
 						// u[0].push_back(temp);
 					}
 				}
+		
+			
+		
 		//std::cout<<"indx = "<<indx<<std::endl;
 		// std::cout<<"len (u[0]) = "<<u[0].size()<<std::endl;
 		
@@ -1245,6 +1403,12 @@ namespace aspect
 		distributed_initial_displacements.compress(VectorOperation::insert);
 		mesh_displacements = distributed_initial_displacements;
 		
+		
+		std::ofstream file_initial("initial", std::ios::app);
+		for (int i =0; i<distributed_initial_displacements.size();i++)
+			file_initial << distributed_initial_displacements[i]<<" ";
+		file_initial << std::endl;
+		file_initial.close();		
 		//std::cout<<"Setup_DOFs complete\n";
 	}
 
