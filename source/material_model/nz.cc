@@ -313,7 +313,8 @@ namespace aspect
               //not strictly correct if thermal expansivities are different, since we are interpreting
               //these compositions as volume fractions, but the error introduced should not be too bad.
               const double temperature_factor = (1.0 - thermal_alpha[j] * (in.temperature[i] - reference_T[j]));
-              density += volume_fractions[j] * densities[j] * temperature_factor;
+			  const double pressure_factor = std::exp(reference_compressibility * (in.pressure[i] - this->get_surface_pressure()));
+              density += volume_fractions[j] * densities[j] * temperature_factor * pressure_factor;
             }
           out.densities[i] = density;
 
@@ -324,7 +325,7 @@ namespace aspect
           out.thermal_expansion_coefficients[i] = thermal_expansivity;
           out.specific_heat[i] = reference_specific_heat;
           out.thermal_conductivities[i] = k_value;
-          out.compressibilities[i] = 0.0;
+          out.compressibilities[i] = reference_compressibility;
           for (unsigned int c=0; c<in.composition[i].size(); ++c)
             out.reaction_terms[i][c] = 0.0;
         }
@@ -478,7 +479,7 @@ namespace aspect
     nz<dim>::
     is_compressible () const
     {
-      return false;
+      return (reference_compressibility != 0);
     }
 
 
@@ -610,6 +611,10 @@ namespace aspect
                              Patterns::Double (0),
                              "Reference strain rate for viscosity stabilization"
                              "Unitless");
+          prm.declare_entry ("Reference compressibility", "4e-12",
+                             Patterns::Double (0),
+                             "The value of the reference compressibility. "
+                             "Units: $1/Pa$.");							 
 
         }
         prm.leave_subsection();
@@ -640,6 +645,7 @@ namespace aspect
           num_plastic                = prm.get_double ("Number of compositional fields with plastic rheology");
           min_strain_rate            = prm.get_double ("Minimum strain rate");
           ref_strain_rate            = prm.get_double ("Reference strain rate");
+		  reference_compressibility  = prm.get_double ("Reference compressibility");
           // if (thermal_viscosity_exponent!=0.0 && reference_T == 0.0)
             // AssertThrow(false, ExcMessage("Error: Material model simple with Thermal viscosity exponent can not have reference_T=0."));
 
