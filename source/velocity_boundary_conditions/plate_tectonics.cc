@@ -19,72 +19,86 @@ namespace aspect
       const double z=p(dim-1);
 			
       const double cm=0.01;
-      double vel_x=vel*cm*cos(angle*M_PI/180);
-      double vel_y=vel*cm*sin(angle*M_PI/180);
-      double vel_z=0;
-
-      //total_depth=512e3, total_width=1536e3, crustal_depth=20e3, lithospheric_depth=120e3, wz_width=40.e3, wz_height=120.e3, wz_depth=60e3
-//        const double wz_width=40.e3;
-//        const double wz_height=120.e3;
-//        const double wz_depth=60.e3;
-//        const double width=1024.e3;
-//        const double depth=512.e3;
-//        const double total_thickness=512e3;
-//        double lithospheric_thickness=120e3;
-      const double mantle_thickness=total_thickness-lithospheric_thickness;
+	  double vel_x,vel_y,vel_z;
+      if (dim==3)
+	  {
+		   vel_x=vel*cm*cos(angle*M_PI/180);
+		   vel_y=vel*cm*sin(angle*M_PI/180);
+	  }
+	  else
+	  {
+		   vel_x=vel*cm;
+	  }
+      const double slm=total_thickness-lithospheric_thickness;
 //        const double transition_zone=50e3;
       //lithospheric_thickness+=transition_zone; //move the upper boundary of the transition zone to the base of lithosphere
 
+	  //influx through crust+lm
       double vel_x_in=vel_x;
-      double vel_x_out=-(vel_x_in*mantle_thickness-vel_x_in*sqrt(mantle_thickness*mantle_thickness-2*transition_zone*lithospheric_thickness+transition_zone*transition_zone))/transition_zone;
+      //outflux through sublith. mantle (excluding transition zone)
+	  //double vel_x_out=-(vel_x_in*mantle_thickness-vel_x_in*sqrt(mantle_thickness*mantle_thickness-2*transition_zone*lithospheric_thickness+transition_zone*transition_zone))/transition_zone;
+	  
+	  
+	  //Solving quadratic equation for vel_out
+	  double a = -transition_zone+2*slm;
+	  double b = 2*slm*vel_x_in-2*transition_zone*vel_x_in-2*lithospheric_thickness*vel_x_in;
+	  double c = -2*vel_x_in*vel_x_in*lithospheric_thickness-vel_x_in*vel_x_in*transition_zone;
+	  double D = b*b-4*a*c;
+	  double x1 = (-b + sqrt(D))/(2*a);
+	  double x2 = (-b - sqrt(D))/(2*a);
+	  double vel_x_out =0;
+	  
+	  
+	  if (x1*x2 > 0) std::cout<<std::endl<<"BOTH ROOTS FOR VELOCITY OUTFLOW EQUATION HAVE THE SAME SIGN"<<std::endl;
+	  else if (x1>0) vel_x_out = x1;
+	  else if (x2>0) vel_x_out = x2;
+	  else std::cout<<std::endl<<"BOTH ROOTS FOR VELOCITY OUTFLOW EQUATION ARE 0 OR NEGATIVE"<<std::endl;
+	  
+	  
+	  double transition_point = transition_zone * (vel_x_in/vel_x_out)/2;
+	  
+	  
+	  
+	  
+	  
       //std::cout<<"vel_x_out: "<<vel_x_out<<"  ";
       double transition_zone_mantle=abs(transition_zone*vel_x_out/vel_x_in);
+	  
+	  double vel_x_in_left = vel_x_in * 2*(1-influx_assymetry);
+	  double vel_x_in_right = vel_x_in * 2*influx_assymetry;
+	  double vel_x_out_left = vel_x_out * 2*(1-outflux_assymetry);
+	  double vel_x_out_right = vel_x_out * 2*outflux_assymetry;
+	  
 
 
-
-
-
+	  //Proper b.c. rewritten
       //const double alfa = 45*M_PI/180; //Alpine fault angle
 
       //In- and out-flux for side faces
 		if (x<width/2-wz_width/2)//left side
         {
-          if (z > total_thickness-lithospheric_thickness+transition_zone)
+          if (z > total_thickness-lithospheric_thickness)
+			  velocity[0]=vel_x_in_left;
+          else if (z>total_thickness-lithospheric_thickness-transition_zone)
 		  {
-			  velocity[0]=vel_x_in;
-			  velocity[0] *= 2*(1-influx_assymetry);
-		  }
-          else if (z>total_thickness-lithospheric_thickness-transition_zone_mantle)
-		  {
-			  velocity[0]=vel_x_out+(vel_x_in-vel_x_out)*(z-(total_thickness-lithospheric_thickness-transition_zone_mantle))/(transition_zone+transition_zone_mantle);
-			  velocity[0] *= 2*(1-influx_assymetry);
+			  velocity[0]=(vel_x_in_left+vel_x_out_left)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_left;
 		  }
           else
-		  {
-			  velocity[0]=vel_x_out;
-			  velocity[0] *= 2*(1-outflux_assymetry);
-		  }
+			  velocity[0]=-vel_x_out_left;
 		  
 		  
         }
 
       else if (x>width/2+wz_width/2) //right side-
         {
-          if (z > total_thickness-lithospheric_thickness+transition_zone)
+          if (z > total_thickness-lithospheric_thickness)
+			  velocity[0]=-vel_x_in_right;
+          else if (z>total_thickness-lithospheric_thickness-transition_zone)
 		  {
-			  velocity[0]=-vel_x_in;
-			  velocity[0] *= 2*influx_assymetry;
-		  }
-          else if (z>total_thickness-lithospheric_thickness-transition_zone_mantle)
-		  {
-			  velocity[0]=-(vel_x_out+(vel_x_in-vel_x_out)*(z-(total_thickness-lithospheric_thickness-transition_zone_mantle))/(transition_zone+transition_zone_mantle));
-			  velocity[0] *= 2*influx_assymetry;
+			  velocity[0]=-((vel_x_in_right+vel_x_out_right)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_right);
 		  }
           else
-		  {
-            velocity[0]=-vel_x_out;
-			velocity[0] *= 2*outflux_assymetry;
-		  }
+			  velocity[0]=vel_x_out_right;
 		
         
 		  
@@ -106,6 +120,82 @@ namespace aspect
 					}
 					
 				}			
+
+	  
+	  if (x==0)
+	  {
+		std::cout<< "vel_x_in_left="<<vel_x_in_left<<" vel_x_out_left="<<vel_x_out_left;
+
+	  
+		std::ofstream myfile("vel", std::ios::app);
+		myfile <<z <<" "<<velocity[0]<<std::endl;
+		myfile.close();	
+	  }	  
+
+
+		// //Proper b.c. with a mistake
+      // //const double alfa = 45*M_PI/180; //Alpine fault angle
+
+      // //In- and out-flux for side faces
+		// if (x<width/2-wz_width/2)//left side
+        // {
+          // if (z > total_thickness-lithospheric_thickness+transition_zone)
+		  // {
+			  // velocity[0]=vel_x_in_left;
+			  // //velocity[0] *= 2*(1-influx_assymetry);
+		  // }
+          // else if (z>total_thickness-lithospheric_thickness-transition_zone_mantle)
+		  // {
+			  // velocity[0]=vel_x_out_left+(vel_x_in_left-vel_x_out_left)*(z-(total_thickness-lithospheric_thickness-transition_zone_mantle))/(transition_zone+transition_zone_mantle);
+			  // //velocity[0] *= 2*(1-influx_assymetry);
+		  // }
+          // else
+		  // {
+			  // velocity[0]=vel_x_out_left;
+			  // //velocity[0] *= 2*(1-outflux_assymetry);
+		  // }
+		  
+		  
+        // }
+
+      // else if (x>width/2+wz_width/2) //right side-
+        // {
+          // if (z > total_thickness-lithospheric_thickness+transition_zone)
+		  // {
+			  // velocity[0]=-vel_x_in_right;
+			  // //velocity[0] *= 2*influx_assymetry;
+		  // }
+          // else if (z>total_thickness-lithospheric_thickness-transition_zone_mantle)
+		  // {
+			  // velocity[0]=-(vel_x_out_right+(vel_x_in_right-vel_x_out_right)*(z-(total_thickness-lithospheric_thickness-transition_zone_mantle))/(transition_zone+transition_zone_mantle));
+			  // //velocity[0] *= 2*influx_assymetry;
+		  // }
+          // else
+		  // {
+            // velocity[0]=-vel_x_out_right;
+			// //velocity[0] *= 2*outflux_assymetry;
+		  // }
+		
+        
+		  
+		  
+		// }
+			
+			
+			// if (dim==3)
+				// {
+					// if (x<width/2-wz_width/2)
+						// {
+						// velocity[1]=vel_y;
+						// velocity[1]=-vel_y;
+						// }
+					// else
+					// {
+						// velocity[1]=-vel_y;
+						// velocity[1]=vel_y;
+					// }
+					
+				// }			
 
 				
 
@@ -231,24 +321,24 @@ namespace aspect
 
       */
 
-      /*
-      //B.c. v.1.5: in/outflux through sidewalls, constant gradient
-      if (x==0)
-      {
-        velocity[0]=vel_x_in*(z-depth/2)/(depth/2);
-        velocity[1]=vel_y;
-      }
-      if (x==width)
-      {
-        velocity[0]=-vel_x_in*(z-depth/2)/(depth/2);
-        velocity[1]=-vel_y;
-      }
-      if (dim == 3)
-      {
-        velocity[2]=0;
-        //if (z==0) velocity[2] = -vel_x_in*2*depth/width*    (-abs(x-width/2)+width/2)/(width/2);
-      }
-      */
+      
+      // //B.c. v.1.5: in/outflux through sidewalls, constant gradient
+      // if (x==0)
+      // {
+        // velocity[0]=vel_x_in*(z-depth/2)/(depth/2);
+        // if (dim==3) velocity[1]=vel_y;
+      // }
+      // if (x==width)
+      // {
+        // velocity[0]=-vel_x_in*(z-depth/2)/(depth/2);
+        // if (dim==3) velocity[1]=-vel_y;
+      // }
+      // if (dim == 3)
+      // {
+        // velocity[2]=0;
+        // //if (z==0) velocity[2] = -vel_x_in*2*depth/width*    (-abs(x-width/2)+width/2)/(width/2);
+      // }
+      
 
 
       if (this->convert_output_to_years())
@@ -274,9 +364,9 @@ namespace aspect
                              "Angle of velocity obliquity. 0 is pure convergence, 90 is pure strike-slip motion."
                              "Units: degrees");
 
-          prm.declare_entry ("Velocity", "2",
+          prm.declare_entry ("Velocity", "1",
                              Patterns::Double (0),
-                             "Total velocity value. Units: $m/s$.");
+                             "Total velocity value. Units: $cm/yr$ or $cm/s$.");
           prm.declare_entry ("Weak zone width", "40e3",
                              Patterns::Double (0),
                              "Weak zone width. Units: $m$.");
@@ -295,7 +385,7 @@ namespace aspect
           prm.declare_entry ("Lithospheric thickness", "120e3",
                              Patterns::Double (0),
                              "Lithospheric thickness. Units: $m$.");
-          prm.declare_entry ("Transition zone height", "50e3",
+          prm.declare_entry ("Transition zone height", "150e3",
                              Patterns::Double (0),
                              "Transition zone for velocity on side faces (left and right). Units: $m$.");
           prm.declare_entry ("Weak zone angle", "45",
@@ -333,7 +423,7 @@ namespace aspect
           width                       = prm.get_double ("Total width");
           depth                       = prm.get_double ("Total height");
           total_thickness             = prm.get_double ("Total height");
-          lithospheric_thickness      = prm.get_double ("Lithospheric thickness")+prm.get_double ("Transition zone height");
+          lithospheric_thickness      = prm.get_double ("Lithospheric thickness");//+prm.get_double ("Transition zone height");
           transition_zone             = prm.get_double ("Transition zone height");
 		  influx_assymetry	          = prm.get_double ("Influx assymetry");
 		  outflux_assymetry	          = prm.get_double ("Outflux assymetry");
