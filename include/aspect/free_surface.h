@@ -258,7 +258,7 @@ namespace aspect
       friend class Simulator<dim>;
       friend class SimulatorAccess<dim>;
 	  
-		  
+	  double diffusivity;
 		  
   };
 }

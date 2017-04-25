@@ -222,6 +222,9 @@ namespace aspect
                          "may have provided for each part of the boundary. You may want "
                          "to compare this with the documentation of the geometry model you "
                          "use in your model.");
+      prm.declare_entry("Diffusivity", "1e-4",
+                        Patterns::Double(0,1),
+                        "Diffusivity constant");						 
     }
     prm.leave_subsection ();
   }
@@ -232,8 +235,8 @@ namespace aspect
     prm.enter_subsection ("Free surface");
     {
       free_surface_theta = prm.get_double("Free surface stabilization theta");
-      std::string advection_dir = prm.get("Surface velocity projection");
-
+	  std::string advection_dir = prm.get("Surface velocity projection");
+	  diffusivity = prm.get_double("Diffusivity");
       if ( advection_dir == "normal")
         advection_direction = SurfaceAdvection::normal;
       else if ( advection_dir == "vertical")
@@ -329,11 +332,11 @@ namespace aspect
     for (std::map<types::boundary_id, std::pair<std::string, std::string> >::const_iterator p = sim.parameters.prescribed_velocity_boundary_indicators.begin();
          p != sim.parameters.prescribed_velocity_boundary_indicators.end(); ++p)
 		{
-			/*if (tangential_mesh_boundary_indicators.find(p->first) == tangential_mesh_boundary_indicators.end())
+			if (tangential_mesh_boundary_indicators.find(p->first) == tangential_mesh_boundary_indicators.end())
 			  {
 				VectorTools::interpolate_boundary_values (free_surface_dof_handler, p->first,
 														  ZeroFunction<dim>(dim), mesh_displacement_constraints);
-			  } */
+			  } 
 		  
 		  
 			// std::vector<bool> mask(sim.introspection.component_masks.velocities.size(), false);
@@ -444,13 +447,34 @@ namespace aspect
   
 	struct xu
 	{
-		double x;
-		double y;
+		
+		//xu(): x(0),y(0), jxw(0) { }
+		double x = 0;
+		double y = 0;
+		double jxw = 0;
+		
 	};
 	bool xuCompare(const xu& firstElem, const xu& secondElem) 
 	{
 		return firstElem.x < secondElem.x;
 	}  
+	
+	double f(double x, double L=1)
+	{
+		
+		//^-shaped
+		//return -std::abs(L/2-x)*0.2+0.1;
+		
+		//quadratic
+		return 0.4*x-0.4*x*x;
+	}
+	double F_def(double L=1, double n=1)
+	{
+		double pn = M_PI*n;
+		
+		//quadratic
+		return -(2*pn*std::sin(pn)+4*std::cos(pn)-4)/(5*pn*pn*pn);
+	}
 	
 	template <int dim>
   void FreeSurfaceHandler<dim>::diffuse_surface(LinearAlgebra::Vector &output)
@@ -510,7 +534,7 @@ namespace aspect
 		
 		
 		
-		const double diffusivity = 1e-4;		
+		
 		QGauss<dim-1>  face_quadrature(free_surface_fe.degree+1);
 		QGauss<dim>  quadrature(free_surface_fe.degree+1);
     UpdateFlags update_flags = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points | update_normal_vectors);
@@ -569,6 +593,7 @@ namespace aspect
 
 		std::vector<double> disp;
 		double max_rhs = -999;
+		double norm = 0;
 		
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
@@ -672,6 +697,7 @@ namespace aspect
 							xu temp;
 							temp.x=p[0];
 							temp.y=displacement;//p[dim-1];
+							temp.jxw = fs_fe_face_values.JxW (q_index);
 							u[ts].push_back(temp);							
 							
 						}
@@ -786,7 +812,7 @@ namespace aspect
 		
 		//Set parameters for the solver: (max_iterations, tolerance); 
 		//std::cout<<"rhs size="<<system_rhs.size()<<"\n";
-		SolverControl solver_control (100000, 1e-20);
+		SolverControl solver_control (1000000, 1e-15);
 		//SolverControl solver_control (5*system_rhs.size(), sim.parameters.linear_stokes_solver_tolerance*system_rhs.l2_norm());
 		//Create solver itself
 		SolverCG<LinearAlgebra::Vector> solver (solver_control);
@@ -827,61 +853,169 @@ namespace aspect
 		//=====
 		
 		//Analytical solution
-		//const double L = 1; //x extent of the domain
+		
+		//Checking cooling from constant initial temperature
+		// double u0 = 0.1;
+		// for (int i=0; i<u[0].size(); i++)
+			// u[0][i].y=u0;
+		
+		
+		double time_ua = std::max(sim.time-0.2/*sim.old_time_step*/,0.0);
+		
+		const double L = 1; //x extent of the domain
 		//const double T = L*L / diffusivity; //charachteristic temperature
 		//const double U = 0.1; //initial displacement amplitude
 		
 		static displacements_matrix ua;
+		std::vector<double> u_diff(u[ts].size(), 0);
+		std::vector<double> ua_diff(u[ts].size(), 0);
 		ua.push_back(displacements_vector());
 		
-		
+		std::cout<<"u[0]size="<<u[0].size()<<" ";
 		
 		double eps = 1e-10;
 		
 		//double max_x = 1;//sim.geometry_model->get_extents()[0];
-		for (int i = 0; i<=u[0].size(); i++)
+		
+		for (int i = 0; i<u[0].size(); ++i)
 		{
 			xu temp;
 			temp.x=u[ts][i].x;
 			
-			int n = 1;
+			int counter = 0;
 			double series = 0;
-			for (; n<=10000000; n++)
+			for (int n=1; n<=1000; n++)
 			{
-				double term = exp(-pow((2*n-1),2)*pow(M_PI,2)*(sim.time/10)) * std::sin((2*n-1)*M_PI*temp.x)/(2*n-1);
 				
+				//cooling of a rod from constant initial temperature
+				//double term = exp(-(2*n-1)*(2*n-1)*M_PI*M_PI*time_ua) * std::sin((2*n-1)*M_PI*temp.x)/(2*n-1);
 				
+				// if (n==1)
+				// {
+				// //explicit Bn
+				// double Bn = 4 * u[0][i].y / M_PI;
+				// std::cout << "Bn expl = "<<Bn<<" ";
+				
+				// //numerical Bn calculation
+				// double Bnn = 0; double y = 0;
+				// double num_segments = 1000;
+				// double step = L/num_segments;
+				// double np = n*M_PI;
+				// for (int k = 0; k<num_segments; k++)
+				// {
+					// //std::cout << "k = "<<k <<" ";
+					// y = std::sin(np*(k+0.5)*step) * 0.1;
+					// Bnn = Bnn + 2* y * step;
+				// }
+				// std::cout << "Bnn = "<<Bnn<<" ";
+				// }
+				//Diffusing a hat shaped initial topography
+				double pn = n*M_PI;
+				
+				//explicit Bn calculation
+				//double Bn = (-0.2/np)*(L/2 - (2*std::sin(np*L/2)/np) - L/2*std::cos (np*L) + std::sin(np*L)/np);
+				//online calculated formula
+				//double Bn1 = -113*std::sin(pn)/(1775*M_PI*n*n) + (std::cos(3927*n/2500)/(10*pn) - (35969*std::sin(3927*n/2500)/(1000*n)
+					//- std::cos(3927*n/2500)/7569)/(1775*n));
+				//if (n==1) std::cout << "Bn1 = "<<Bn1 <<" ";
+				//double Bn=4/(5*M_PI*M_PI);
+				//numerical Bn calculation
+				// double Bn = 0; double y = 0;
+				// double num_segments = 1000;
+				// double step = L/num_segments;
+				// for (int k = 0; k<num_segments; k++)
+				// {
+					// //std::cout << "k = "<<k <<" ";
+					// y = std::sin(np*k*step) * ( -0.2 * std::abs(L/2 - k*step) + 0.1);
+					// Bn = Bn + y * step;
+				// }
+				
+				double Bn = 2*F_def(1,n);
+				double term = Bn * std::sin (pn*temp.x) * std::exp(-pn*pn*diffusivity*time_ua);
 				series += term;
+				//if (n==1)
+				//{
+					//std::cout << "Bn = "<<Bn<<" ";
+					// std::cout << "exp = "<<std::exp(-np*np*diffusivity*time_ua)<<" ";
+					//std::cout << "series = "<<series <<" ";
+					// std::cout << "term = "<<term <<" ";					
+				//}				
+				
 				if (std::abs(term) < eps)
+					counter++;
+				else 
+					counter=0;
+				if (counter>3)
 				{
-					//std::cout << "last term = "<<term <<" ";
+					std::cout << "n reached= "<<n<<" ";
 					break;
 				}
 			}
 			//if (i==0)
 				//std::cout << std::endl<<"n (series)= " <<n<<" series = "<< series <<std::endl;
 			
-			if (ts==0)
-				temp.y = u[ts][i].y;
-			else
-				temp.y=4 * u[0][i].y * series / M_PI ;
-			
-			ua[ts].push_back(temp);		
+			//if (ts==0)
+				//temp.y = u[ts][i].y;
+			//else
+				//temp.y=4 * u[0][i].y * series / M_PI ;
+				temp.y = series;
+			ua[ts].push_back(temp);				
 			
 			
 		}
 		
 		std::ofstream myfile2("ua", std::ios::app);
+		std::ofstream myfile3("u_diff", std::ios::app);
+		std::ofstream myfile4("ua_diff", std::ios::app);
+		std::ofstream myfile5("u-ua", std::ios::app);
 		
-		if (ts<2)
-		for (unsigned int j=0; j<u[ts].size(); ++j) 
+		
+		
+		
+		for (unsigned int j=0; j<ua[ts].size(); ++j) 
+		{
+			myfile2 << ua[ts][j].x<<" ";
+			myfile2 << ua[ts][j].y<<std::endl;
+			myfile5 << ua[ts][j].x<<" ";
+			myfile5 << u[ts][j].y-ua[ts][j].y<<std::endl;
+			
+			if (ts)
 			{
-				myfile2 << ua[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
-				myfile2 << ua[ts][j].y<<std::endl;
+				if (j==15)
+				{
+					myfile3 << ts<<" ";
+					myfile3 << u[ts][j].y-u[ts-1][j].y<<std::endl;
+					myfile4 << ts<<" ";
+					myfile4 << ua[ts][j].y-ua[ts-1][j].y<<std::endl;
+					
+				}
 			}
+			
+		}
+			
+			
+		//calculating norm of error against resolution
+		
+		std::ofstream myfile6("u-ua_norm", std::ios::app);
+		if (ts==10)
+		{
+			for (unsigned int j=0; j<ua[ts].size(); ++j) 
+				norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
+			norm = pow(norm, 0.5);
+			myfile6 << sim.parameters.initial_global_refinement<<" ";
+			myfile6 << norm<<std::endl;
+		}
+		
+			
+		myfile2 << std::endl;
+		myfile5 << std::endl;
+		// myfile3 << std::endl;
+		// myfile4 << std::endl;
 		myfile2.close();			
-		
-		
+		myfile3.close();			
+		myfile4.close();			
+		myfile5.close();
+		myfile6.close();
 		//Compare obtained solution with analytical solution
 		
 		
@@ -1353,7 +1487,17 @@ namespace aspect
 						Point<dim> displacement;
 						displacement[0] = 0.;
 						displacement[1] = 0.;
-						displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
+						//displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
+						double L=1; double amp=0.1;
+						
+						//^-shaped topography
+						//displacement[dim-1] = -p[dim-1]*2*amp*(std::abs(L/2-p[0]))+amp;
+						//constant topography
+						//displacement[dim-1] = 0;
+						//linear topography
+						//displacement[dim-1] = p[dim-1]*amp*p[0]; 
+						//quadratic topography
+						displacement[dim-1] = p[dim-1]*amp*(4*p[0]-4*p[0]*p[0]); 
 						unsigned int support_point_index;
 						for (unsigned int dir=0; dir<dim; ++dir)
 							{

@@ -613,7 +613,8 @@ namespace aspect
     new_time_step = termination_manager.check_for_last_time_step(std::min(new_time_step,
                                                                           parameters.maximum_time_step));
 
-    return new_time_step;
+    //return new_time_step;
+	return 0.2;
   }
 
 
