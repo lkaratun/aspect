@@ -121,16 +121,16 @@ namespace aspect
 					
 				}			
 
-	  
-	  if (x==0)
-	  {
-		std::cout<< "vel_x_in_left="<<vel_x_in_left<<" vel_x_out_left="<<vel_x_out_left;
+	  //Debug
+	   if (x==0)
+	   {
+		//std::cout<< "vel_x_in_left="<<vel_x_in_left<<" vel_x_out_left="<<vel_x_out_left;
 
 	  
 		std::ofstream myfile("vel", std::ios::app);
 		myfile <<z <<" "<<velocity[0]<<std::endl;
 		myfile.close();	
-	  }	  
+		}	  
 
 
 		// //Proper b.c. with a mistake

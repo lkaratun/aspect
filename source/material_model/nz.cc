@@ -186,8 +186,8 @@ namespace aspect
                   //if (j<3) //crust and weak zone
                   if (in.temperature[i])
                     //Gerya formula
-                    viscosity_dislocation_creep =  F2 * 1/pow(material_parameters[j],1/*/nvs[j]*/) * strainrate_mod *
-                                                   exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(3.5*R*in.temperature[i]));
+                    viscosity_dislocation_creep =  F2 * pow(material_parameters[j],-1/nas[j]) * strainrate_mod *
+                                                   exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nts[j]*R*in.temperature[i]));
 
                   else viscosity_dislocation_creep=eta_max;
 
@@ -199,20 +199,24 @@ namespace aspect
                   const double y=in.position[i](1);
                   const double z=in.position[i](2);
 
-                  if (in.temperature[i]<615 && in.temperature[i]>612 && x> 155e3 && x<180e3 && y<20e3 && j==0)
+                  if (in.temperature[i]<1000 && in.temperature[i]>900 && x> 100e3 && x<200e3 && j==3)
                   {
                     // std::cout<<"depth: "<<depth<<"  ";
                     std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
+					std::cout<<"nvs[j]: "<<nvs[j]<<"  ";
+					std::cout<<"strainrate_mod: "<<strainrate_mod<<"  ";
+					
                     // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
                     //std::cout<<"sigma_y: "<<sigma_y<<"  ";
-                    std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
+                    //std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
                     std::cout<<"temperature: "<<in.temperature[i]<<"  ";
                     std::cout<<"pressure: "<<in.pressure[i]<<"  ";
-                    std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nvs[j]*R*in.temperature[i]))<<"  ";
-                    std::cout<<"prefactor: "<<F2 * 1/pow(material_parameters[j],1/nvs[j])<<"  ";
+                    std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*in.pressure[i])/(nts[j]*R*in.temperature[i]))<<"  ";
+                    //std::cout<<"prefactor: "<<F2 * 1/pow(material_parameters[j],1/nvs[j])<<"  ";
+					std::cout<<"preexp term: "<<pow(material_parameters[j],-1/nas[j])<<"  ";
                     std::cout<<"viscosity_dislocation_creep: "<<viscosity_dislocation_creep<<"  ";
-                  }*/
-
+                  }
+					*/
 
 
 
@@ -380,7 +384,7 @@ namespace aspect
 							strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
 							strainrate_mod=1/strainrate_mod;
 							//Gerya formula
-							viscosity_dislocation_creep =  F2 * 1/material_parameters[j] * strainrate_mod *
+							viscosity_dislocation_creep =  F2 * pow(material_parameters[j],-1/nas[j]) * strainrate_mod *
 																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nts[j]*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
@@ -394,6 +398,7 @@ namespace aspect
 
 			//***************Calculate total viscosity***************
 			viscosity_MC = average_value(composition, viscosities_MC, viscosity_averaging);
+			//viscosity_MC = eta_max;
 			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);	
 			
 			return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviour
@@ -589,7 +594,12 @@ namespace aspect
                              "List of plastic stress exponents, $n_p$, for background mantle and compositional fields,"
                              "for a total of N+1 values, where N is the number of compositional fields."
                              "If only one values is given, then all use the same value.  Units: None");														 
-
+          prm.declare_entry ("Material exponents", "3.5",
+                             Patterns::List(Patterns::Double(0)),
+                             "List of material stress exponents, $n_p$, for background mantle and compositional fields,"
+                             "for a total of N+1 values, where N is the number of compositional fields."
+                             "If only one values is given, then all use the same value.  Units: None");
+							 
           prm.declare_entry ("Material parameters", "1e-20",
                              Patterns::List(Patterns::Double(0)),
                              "List of material parameter values. Units: Pa^-n*s^-1");
@@ -707,7 +717,7 @@ namespace aspect
           else
             nts = x_values;					
 					
-					// Parse plastic exponents
+		  // Parse plastic exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Plastic exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
                       ExcMessage("Length of np list must be either one, or n_compositional_fields"));
@@ -715,6 +725,15 @@ namespace aspect
             nps.assign( n_fields , x_values[0]);
           else
             nps = x_values;
+		
+		  // Parse material exponents
+          x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material exponents")));
+          AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
+                      ExcMessage("Length of na list must be either one, or n_compositional_fields"));
+          if (x_values.size() == 1)
+            nas.assign( n_fields , x_values[0]);
+          else
+            nas = x_values;		
 
           // Parse material parameters
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material parameters")));
