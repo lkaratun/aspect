@@ -347,17 +347,17 @@ namespace aspect
                                    std::inserter(intersection, intersection.end()));
 
             // if the same indicators are specified for different boundary conditions, throw exception
-            AssertThrow (intersection.empty(),
-                         ExcMessage ("Boundary indicator <"
-                                     +
-                                     Utilities::int_to_string(*intersection.begin())
-                                     +
-                                     "> with symbolic name <"
-                                     +
-                                     geometry_model->translate_id_to_symbol_name (*intersection.begin())
-                                     +
-                                     "> is listed as having more "
-                                     "than one type of velocity or traction boundary condition in the input file."));
+            // AssertThrow (intersection.empty(),
+                         // ExcMessage ("Boundary indicator <"
+                                     // +
+                                     // Utilities::int_to_string(*intersection.begin())
+                                     // +
+                                     // "> with symbolic name <"
+                                     // +
+                                     // geometry_model->translate_id_to_symbol_name (*intersection.begin())
+                                     // +
+                                     // "> is listed as having more "
+                                     // "than one type of velocity or traction boundary condition in the input file."));
           }
 
       // Check that the periodic boundaries do not have other boundary conditions set
@@ -892,6 +892,7 @@ namespace aspect
 
           // here we create a mask for interpolate_boundary_values out of the 'selector'
           std::vector<bool> mask(introspection.component_masks.velocities.size(), false);
+		  std::cout<<"Length of mask in core.cc = "<<mask.size()<<std::endl;
           const std::string &comp = parameters.prescribed_velocity_boundary_indicators[p->first].first;
 
           if (comp.length()>0)

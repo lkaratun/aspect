@@ -464,7 +464,8 @@ namespace aspect
                                      distributed_solution.block(block_idx),
                                      system_rhs.block(block_idx));
 
-    // solve the linear system:
+    std::cout<<"Initial residual = "<<initial_residual<<"/n";
+	// solve the linear system:
     try
       {
         solver.solve (system_matrix.block(block_idx,block_idx),
