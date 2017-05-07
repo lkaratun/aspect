@@ -481,6 +481,7 @@ namespace aspect
 	{
 		//std::cout<<"entered diffuse_surface\n";
 		const unsigned int ts = sim.timestep_number;
+		
 		std::cout <<"Time = " <<sim.time <<std::endl;
 		LinearAlgebra::SparseMatrix system_matrix;
 		LinearAlgebra::Vector system_rhs, solution;
@@ -594,6 +595,7 @@ namespace aspect
 		std::vector<double> disp;
 		double max_rhs = -999;
 		double norm = 0;
+		double theta = 1;
 		
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
@@ -642,12 +644,6 @@ namespace aspect
 									continue;
 								//if (sim.timestep_number==0) std::cout<<"dof.no.="<<i<<" ";
 								//if (sim.timestep_number==0) std::cout<<"c.i="<<free_surface_fe.system_to_component_index(i).first<<" ";
-								//Set right hand side
-								cell_rhs(i) += fs_fe_face_values.shape_value (i, q_index) 
-												* displacement 
-												* fs_fe_face_values.JxW (q_index);
-								if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
-
 								
 								//Set local matrix elements					
 								Tensor<2, dim, double> rot;
@@ -655,6 +651,17 @@ namespace aspect
 								Tensor<2, dim, double> I;
 								for (int k = 0; k<dim; k++)
 									I[k][k]=1;
+								rot =  I - rot;
+								
+								//Set right hand side -- do we need rot vector? 
+								cell_rhs(i) += (fs_fe_face_values.shape_value (i, q_index) 
+												* displacement 
+												- sim.time_step*diffusivity*(1-theta)*fs_fe_face_values.shape_value (i, q_index)*displacement)
+												* fs_fe_face_values.JxW (q_index);
+								if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
+
+								
+
 								// if (fs_fe_face_values.normal_vector(q_index)[0] || fs_fe_face_values.normal_vector(q_index)[1])
 									// std::cout<<fs_fe_face_values.normal_vector(q_index)[0]<<" "<<fs_fe_face_values.normal_vector(q_index)[1]<<std::endl;
 								//normal vectors are fine
@@ -664,7 +671,7 @@ namespace aspect
 
 								
 								//rot =  dealii::identity_tensor<dim> () - rot;
-								rot =  I - rot;
+								
 								
 								for (unsigned int j=0; j<dofs_per_cell; ++j)
 								{
@@ -672,9 +679,16 @@ namespace aspect
 										continue;
 									/*fs_fe_face_values.shape_grad (i|j, q_index) - gradients of shape functions*/
 									
-									cell_matrix(i,j) += (sim.time_step*diffusivity * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
+									cell_matrix(i,j) += (sim.time_step*diffusivity * theta * 
+									(rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
 										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
-										* fs_fe_face_values.JxW (q_index);            // need SURFACE gradient
+										* fs_fe_face_values.JxW (q_index); 
+										/*
+									cell_rhs(i,j) += (displacement * sim.time_step * diffusivity * (1-theta) * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
+										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
+										* fs_fe_face_values.JxW (q_index); */
+
+										// need SURFACE gradient
 									// if (sim.time_step*diffusivity * (fs_fe_face_values.shape_grad (i, q_index)  * fs_fe_face_values.shape_grad (j, q_index))> 1e-13)
 										// std::cout<<sim.time_step*diffusivity * (fs_fe_face_values.shape_grad (i, q_index)  * fs_fe_face_values.shape_grad (j, q_index)) <<" ";
 									//around 1e-15
@@ -860,7 +874,7 @@ namespace aspect
 			// u[0][i].y=u0;
 		
 		
-		double time_ua = std::max(sim.time-0.2/*sim.old_time_step*/,0.0);
+		double time_ua = std::max(sim.time-sim.time_step/*sim.old_time_step*/,0.0);
 		
 		const double L = 1; //x extent of the domain
 		//const double T = L*L / diffusivity; //charachteristic temperature
@@ -997,7 +1011,7 @@ namespace aspect
 		//calculating norm of error against resolution
 		
 		std::ofstream myfile6("u-ua_norm", std::ios::app);
-		if (ts==10)
+		if (sim.time>=10)
 		{
 			for (unsigned int j=0; j<ua[ts].size(); ++j) 
 				norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
