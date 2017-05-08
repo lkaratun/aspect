@@ -135,7 +135,9 @@ namespace aspect
         std::vector<double> nvs;
 				std::vector<double> nps;
 				std::vector<double> nts;
+				std::vector<double> nas;
         double num_plastic;
+		double reference_compressibility;
 
     };
 
