@@ -1,9 +1,9 @@
-#include <aspect/velocity_boundary_conditions/plate_tectonics.h>
+#include <aspect/boundary_velocity/plate_tectonics.h>
 #include <math.h>
 
 namespace aspect
 {
-  namespace VelocityBoundaryConditions
+  namespace BoundaryVelocity
   {
     template <int dim>
     Tensor<1,dim>
@@ -441,9 +441,9 @@ namespace aspect
 // explicit instantiations
 namespace aspect
 {
-  namespace VelocityBoundaryConditions
+  namespace BoundaryVelocity
   {
-    ASPECT_REGISTER_VELOCITY_BOUNDARY_CONDITIONS(plate_tectonics,
+    ASPECT_REGISTER_BOUNDARY_VELOCITY_MODEL(plate_tectonics,
                                                  "plate tectonics",
                                                  "My b.c.")
   }
