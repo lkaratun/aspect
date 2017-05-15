@@ -166,10 +166,15 @@ namespace aspect
 
               //Mohr-Coulomb criterion
               //sigma_y = cohesion[j] + in.pressure[i]*std::tan(angle_if[j]*M_PI/180);
-              if (strainrate_E2)
-                viscosity_MC = 1/(1/(sigma_y/(2*ref_strain_rate*pow(strainrate_E2/ref_strain_rate,(nps[j]-1)/nps[j]))+eta_min)+1/eta_max);
-              else
-                viscosity_MC=eta_max;
+			if (strainrate_E2)
+			{
+				strainrate_mod=strainrate_E2/ref_strain_rate;
+				strainrate_mod=pow(strainrate_mod,(nps[j]-1)/nps[j]);
+				strainrate_mod*=ref_strain_rate;
+				viscosity_MC = 1/(1/(sigma_y/(2*strainrate_mod)+eta_min)+1/eta_max);
+			}
+			else
+				viscosity_MC=eta_max;
 
               //Calculate dislocation creep
 
@@ -368,7 +373,12 @@ namespace aspect
 											cohesion[j] * std::cos(angle_if[j]*M_PI/180) + std::max(pressure,0.0) * std::sin(angle_if[j]*M_PI/180) );
 
 					if (strainrate_E2)
-						viscosity_MC = 1/(1/(sigma_y/(2*strainrate_E2)+eta_min)+1/eta_max);
+					{
+						strainrate_mod=strainrate_E2/ref_strain_rate;
+						strainrate_mod=pow(strainrate_mod,(nps[j]-1)/nps[j]);
+						strainrate_mod*=ref_strain_rate;
+						viscosity_MC = 1/(1/(sigma_y/(2*strainrate_mod)+eta_min)+1/eta_max);
+					}
 					else
 						viscosity_MC=eta_max;
 					
