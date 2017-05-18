@@ -187,7 +187,9 @@ namespace aspect
                   //Normalize strain rate
                   strainrate_mod=strainrate_E2/ref_strain_rate;
                   strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
+				  strainrate_mod*=ref_strain_rate;
                   strainrate_mod=1/strainrate_mod;
+				  
                   //if (j<3) //crust and weak zone
                   if (in.temperature[i])
                     //Gerya formula
@@ -392,13 +394,15 @@ namespace aspect
 							//Normalize strain rate
 							strainrate_mod=strainrate_E2/ref_strain_rate;
 							strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
+							strainrate_mod*=ref_strain_rate;
 							strainrate_mod=1/strainrate_mod;
 							//Gerya formula
 							viscosity_dislocation_creep =  F2 * pow(material_parameters[j],-1/nas[j]) * strainrate_mod *
 																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nts[j]*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
-
+					
+					
 					// total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
 					// viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
 					
