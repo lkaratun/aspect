@@ -33,8 +33,8 @@
 #include <deal.II/lac/sparsity_tools.h>
 
 #include <deal.II/numerics/vector_tools.h>
-#include <deal.II/numerics/matrix_tools.h>
-#include <deal.II/numerics/data_out.h>
+//#include <deal.II/numerics/matrix_tools.h>
+//#include <deal.II/numerics/data_out.h>
 
 #include <fstream>
 #include <iostream>
@@ -536,8 +536,10 @@ namespace aspect
 		
 		
 		
-		QGauss<dim-1>  face_quadrature(free_surface_fe.degree+1);
-		QGauss<dim>  quadrature(free_surface_fe.degree+1);
+		//QGauss<dim-1>  face_quadrature(free_surface_fe.degree);
+		//QGauss<dim>  quadrature(free_surface_fe.degree+1);
+		QTrapez<dim-1>  face_quadrature;
+		QTrapez<dim>  quadrature;
     UpdateFlags update_flags = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points | update_normal_vectors);
 	UpdateFlags update_flags2 = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points );
     FEFaceValues<dim> fs_fe_face_values (*sim.mapping, free_surface_fe, face_quadrature, update_flags);
@@ -673,6 +675,8 @@ namespace aspect
 								//rot =  dealii::identity_tensor<dim> () - rot;
 								
 								
+                                                                
+                                                                
 								for (unsigned int j=0; j<dofs_per_cell; ++j)
 								{
 									if (free_surface_fe.system_to_component_index(j).first != dim-1)
