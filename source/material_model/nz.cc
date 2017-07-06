@@ -23,6 +23,8 @@
 #include <deal.II/base/parameter_handler.h>
 
 #include <math.h>
+#include <boost/math/special_functions/fpclassify.hpp> // isnan
+
 
 
 using namespace dealii;
@@ -243,28 +245,40 @@ namespace aspect
 
               if (!crash)
                 {
-                  if (isnan(viscosity_dislocation_creep) || isnan(viscosity_MC))
+                  //if (isnan(viscosity_dislocation_creep) || isnan(viscosity_MC))
+					if (boost::math::isnan(viscosity_dislocation_creep) || boost::math::isnan(viscosity_MC))
                     {
-                      std::cout<<"viscosity_dislocation_creep or MC is NAN "<<viscosity_dislocation_creep<<"  "<<viscosity_MC<<" ";
+                      std::cout<<"viscosity_dislocation_creep or MC is NAN. Visc_disl_creep = "<<viscosity_dislocation_creep<<"  Visc_MC = "<<viscosity_MC<<" \n";
+						std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
+						std::cout<<"strainrate_mod: "<<strainrate_mod<<"  \n";
+						std::cout<<"material_parameters[j]: "<<material_parameters[j]<<"  ";
+						std::cout<<"F2: "<<F2<<"  ";
+						std::cout<<"nas[j]: "<<nas[j]<<"  ";
+						std::cout<<"nvs[j]: "<<nvs[j]<<"  ";
+						std::cout<<"temperature: "<<in.temperature[i]<<"  ";
+						std::cout<<"pressure: "<<in.pressure[i]<<"  \n";
+						std::cout<<"prefactor: "<<pow(material_parameters[j],-1/nas[j]) * strainrate_mod<<"  ";
+						std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nts[j]*R*in.temperature[i]))<<"  \n\n";
+						
                       crash = true;											
-										}
+					}
                 }
 
               total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
               viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
 
-              if (!crash)
-                {
-                  if (viscosities[j]>=eta_min && viscosities[j]<=eta_max)
-                    {}
-                  else
-                    {
-                      std::cout<<"viscosities[j]: "<<viscosities[j]<<"  ";
-                      crash = true;
-                    }
+              // if (!crash)
+                // {
+                  // if (viscosities[j]>=eta_min && viscosities[j]<=eta_max)
+                    // {}
+                  // else
+                    // {
+                      // std::cout<<"viscosities[j]: "<<viscosities[j]<<"  ";
+                      // crash = true;
+                    // }
 
 
-                }							
+                // }							
 
             }
 
