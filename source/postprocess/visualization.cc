@@ -518,7 +518,7 @@ namespace aspect
           data_out.write_xdmf_file(xdmf_entries, this->get_output_directory() + xdmf_filename,
                                    this->get_mpi_communicator());
           mesh_changed = false;
-        }
+        } 
       else if (output_format=="vtu")
         {
           // Write master files (.pvtu,.pvd,.visit) on the master process
