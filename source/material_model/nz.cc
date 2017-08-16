@@ -345,11 +345,14 @@ namespace aspect
 
 
           double thermal_expansivity = 0.0;
-          for (unsigned int j=0; j < volume_fractions.size(); ++j)
+		  for (unsigned int j=0; j < volume_fractions.size(); ++j)
             thermal_expansivity += volume_fractions[j] * thermal_alpha[j];
           out.thermal_expansion_coefficients[i] = thermal_expansivity;
           out.specific_heat[i] = reference_specific_heat;
-          out.thermal_conductivities[i] = k_value;
+		  if (t_conductivity)
+			  out.thermal_conductivities[i] = t_conductivity;
+		  else
+			  out.thermal_conductivities[i] = t_diffusivity*reference_specific_heat*density;
           out.compressibilities[i] = reference_compressibility;
           for (unsigned int c=0; c<in.composition[i].size(); ++c)
             out.reaction_terms[i][c] = 0.0;
@@ -565,10 +568,14 @@ namespace aspect
                              "See the general documentation "
                              "of this model for a formula that states the dependence of the "
                              "viscosity on this factor, which is called $\\beta$ there.");
-          prm.declare_entry ("Thermal conductivity", "4.7",
+          prm.declare_entry ("Thermal conductivity", "2.7",
                              Patterns::Double (0),
                              "The value of the thermal conductivity $k$. "
                              "Units: $W/m/K$.");
+		  prm.declare_entry ("Thermal diffusivity", "0.8e-6",
+							 Patterns::Double (0),
+							 "The value of the thermal conductivity $k$. "
+							 "Units: $W/m/K$.");
           prm.declare_entry ("Reference specific heat", "1250",
                              Patterns::Double (0),
                              "The value of the specific heat $cp$. "
@@ -677,7 +684,8 @@ namespace aspect
           eta_reference              = prm.get_double ("Reference viscosity");
           composition_viscosity_prefactor = prm.get_double ("Composition viscosity prefactor");
           thermal_viscosity_exponent = prm.get_double ("Thermal viscosity exponent");
-          k_value                    = prm.get_double ("Thermal conductivity");
+          t_conductivity             = prm.get_double ("Thermal conductivity");
+		  t_diffusivity              = prm.get_double ("Thermal diffusivity");
           reference_specific_heat    = prm.get_double ("Reference specific heat");
           mantle_viscosity           = prm.get_double ("Mantle viscosity");
           num_plastic                = prm.get_double ("Number of compositional fields with plastic rheology");
@@ -726,7 +734,7 @@ namespace aspect
             thermal_alpha.assign( n_fields , x_values[0]);
           else
             thermal_alpha = x_values;
-
+		
           // Parse stress exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Stress exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),

@@ -120,7 +120,8 @@ namespace aspect
         std::vector<double> angle_if;
         std::vector<double> cohesion;
         double reference_specific_heat;
-        double k_value;
+        double t_conductivity;
+		double t_diffusivity;
         double composition_viscosity_prefactor;
         double thermal_viscosity_exponent;
         double mantle_viscosity;
