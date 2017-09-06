@@ -40,8 +40,34 @@
 #include <iostream>
 
 
-
-
+//from step-26
+#include <deal.II/base/utilities.h>
+#include <deal.II/base/quadrature_lib.h>
+#include <deal.II/base/function.h>
+#include <deal.II/base/logstream.h>
+#include <deal.II/lac/vector.h>
+#include <deal.II/lac/full_matrix.h>
+#include <deal.II/lac/dynamic_sparsity_pattern.h>
+#include <deal.II/lac/sparse_matrix.h>
+#include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/grid/tria.h>
+#include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_refinement.h>
+#include <deal.II/grid/grid_out.h>
+#include <deal.II/grid/tria_accessor.h>
+#include <deal.II/grid/tria_iterator.h>
+#include <deal.II/dofs/dof_handler.h>
+#include <deal.II/dofs/dof_accessor.h>
+#include <deal.II/dofs/dof_tools.h>
+#include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/fe_values.h>
+#include <deal.II/numerics/data_out.h>
+#include <deal.II/numerics/vector_tools.h>
+#include <deal.II/numerics/error_estimator.h>
+#include <deal.II/numerics/solution_transfer.h>
+#include <deal.II/numerics/matrix_tools.h>
 
 namespace aspect
 {
@@ -490,9 +516,13 @@ namespace aspect
 		
 		
 		//set up constraints
-    ConstraintMatrix mass_matrix_constraints(mesh_locally_relevant);
-    DoFTools::make_hanging_node_constraints(free_surface_dof_handler, mass_matrix_constraints);
 		
+    ConstraintMatrix constraints(mesh_locally_relevant);
+    DoFTools::make_hanging_node_constraints(free_surface_dof_handler, constraints);
+	//make an empty oconstraint matrix
+	ConstraintMatrix blank_constraints(mesh_locally_relevant);
+
+	
     // typedef std::set< std::pair< std::pair<types::boundary_id, types::boundary_id>, unsigned int> > periodic_boundary_pairs;
     // periodic_boundary_pairs pbp = sim.geometry_model->get_periodic_boundary_pairs();
     // for (periodic_boundary_pairs::iterator p = pbp.begin(); p != pbp.end(); ++p)
@@ -507,7 +537,7 @@ namespace aspect
 		
 		
 		//std::cout<<"completed periodic boundaries loop\n";
-    mass_matrix_constraints.close();
+    constraints.close();
 		
 #ifdef ASPECT_USE_PETSC
     LinearAlgebra::DynamicSparsityPattern sparsity_pattern(mesh_locally_relevant);
@@ -517,7 +547,7 @@ namespace aspect
                                           mesh_locally_relevant,
                                           sim.mpi_communicator);
 #endif
-    DoFTools::make_sparsity_pattern (free_surface_dof_handler, sparsity_pattern, mass_matrix_constraints, false,
+    DoFTools::make_sparsity_pattern (free_surface_dof_handler, sparsity_pattern, constraints, false,
                                      Utilities::MPI::this_mpi_process(sim.mpi_communicator));
 #ifdef ASPECT_USE_PETSC
     SparsityTools::distribute_sparsity_pattern(sparsity_pattern,
@@ -530,16 +560,19 @@ namespace aspect
     sparsity_pattern.compress();
     system_matrix.reinit (sparsity_pattern);
 #endif
+	
+
+
+	
 		
 		
 		
 		
 		
-		
-		//QGauss<dim-1>  face_quadrature(free_surface_fe.degree);
-		//QGauss<dim>  quadrature(free_surface_fe.degree+1);
-		QTrapez<dim-1>  face_quadrature;
-		QTrapez<dim>  quadrature;
+		QGauss<dim-1>  face_quadrature(free_surface_fe.degree);
+		QGauss<dim>  quadrature(free_surface_fe.degree+1);
+		// QTrapez<dim-1>  face_quadrature;
+		// QTrapez<dim>  quadrature;
     UpdateFlags update_flags = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points | update_normal_vectors);
 	UpdateFlags update_flags2 = UpdateFlags(update_values | update_gradients | update_JxW_values | update_quadrature_points );
     FEFaceValues<dim> fs_fe_face_values (*sim.mapping, free_surface_fe, face_quadrature, update_flags);
@@ -548,6 +581,58 @@ namespace aspect
 	FEFaceValues<dim> fe_face_values (*sim.mapping, sim.finite_element, face_quadrature, update_flags);
 		LinearAlgebra::Vector displacements = this->mesh_displacements;//free_surface_dof_handler.mesh_displacements;
 
+		double theta = 1;
+		
+		
+		//Using deal.II tools
+		// SparseMatrix<double> mass_matrix;
+		// SparseMatrix<double> laplace_matrix;	
+		// SparsityPattern      dealii_sparsity_pattern;
+		// ConstraintMatrix     dealii_constraints;
+		// SparseMatrix<double> dealii_system_matrix;
+		
+		// dealii_constraints.clear ();
+		// DoFTools::make_hanging_node_constraints (free_surface_dof_handler,
+												 // dealii_constraints);
+		// dealii_constraints.close();
+
+		// DynamicSparsityPattern dsp(free_surface_dof_handler.n_dofs());
+		// DoFTools::make_sparsity_pattern(free_surface_dof_handler,
+										// dsp,
+										// dealii_constraints,
+										// /*keep_constrained_dofs = */ true);
+		// dealii_sparsity_pattern.copy_from(dsp);		
+		
+		
+		// mass_matrix.reinit(sparsity_pattern);
+		// laplace_matrix.reinit(sparsity_pattern);		
+		
+		// MatrixCreator::create_mass_matrix(free_surface_dof_handler,
+								  // quadrature,
+								  // mass_matrix);
+		// MatrixCreator::create_laplace_matrix(free_surface_dof_handler,
+											 // quadrature,
+											 // laplace_matrix);
+											 
+		// dealii_system_matrix.copy_from(mass_matrix);
+        // dealii_system_matrix.add(theta * sim.time_step * diffusivity, laplace_matrix);		
+
+		
+		//Output resulting matrix
+		// if (sim.timestep_number == 0)	
+		// {
+			// std::ofstream file_dealii_system_matrix("dealii_system_matrix", std::ios::app);
+			// for (int i =0; i<dealii_system_matrix.m();i++)
+				// file_dealii_system_matrix << dealii_system_matrix[i]<<" ";
+			// file_dealii_system_matrix << std::endl;
+			// file_dealii_system_matrix.close();	
+		// }
+		
+		// std::ofstream file_dealii_system_matrix("dealii_system_matrix", std::ios::app);
+		// dealii_system_matrix.print	(file_dealii_system_matrix);			
+		
+		
+		
 		
 		//Shortcuts
 		const unsigned int dofs_per_cell = free_surface_fe.dofs_per_cell;
@@ -567,6 +652,8 @@ namespace aspect
 		std::cout<<"n_face_q_points = "<<n_face_q_points<<std::endl;
 		//Create local matrices
 		FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
+		// FullMatrix<double>   cell_mass (dofs_per_cell, dofs_per_cell);
+		// FullMatrix<double>   cell_laplace (dofs_per_cell, dofs_per_cell);
 		Vector<double>       cell_rhs (dofs_per_cell);
 		//Vector to store global numbers of local DOFs
 		std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
@@ -597,7 +684,7 @@ namespace aspect
 		std::vector<double> disp;
 		double max_rhs = -999;
 		double norm = 0;
-		double theta = 1;
+		
                 int cell_counter = 0;
                 std::ofstream assembly("assembly", std::ios::app);
 		
@@ -628,6 +715,8 @@ namespace aspect
 						fs_fe_face_values.reinit (fscell, face_no);
 						//Reset the local cell's contributions to global matrix
 						cell_matrix = 0;
+						// cell_mass = 0;
+						// cell_laplace = 0;
 						cell_rhs = 0;
 						//Fill global numbers of local DOFs for current cell
 						fscell->get_dof_indices (local_dof_indices);
@@ -671,12 +760,12 @@ namespace aspect
 												* displacement 
 												- sim.time_step*diffusivity*(1-theta)*fs_fe_face_values.shape_value (i, q_index)*displacement)
 												* fs_fe_face_values.JxW (q_index);
-                                                                cell_rhs(i) += rhs_contribution;
+								cell_rhs(i) += rhs_contribution;
+								
+								assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" shape_value="<<fs_fe_face_values.shape_value(i, q_index)<<" shape_grad="<<fs_fe_face_values.shape_grad(i, q_index)<<" rhs_contribution="<<rhs_contribution<<" ";
+								assembly <<std::endl;
                                                                 
-                                                                assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" shape_value="<<fs_fe_face_values.shape_value(i, q_index)<<" shape_grad="<<fs_fe_face_values.shape_grad(i, q_index)<<" rhs_contribution="<<rhs_contribution<<" ";
-                                                                assembly <<std::endl;
-                                                                
-								if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
+								// if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
 
 								
 
@@ -703,10 +792,17 @@ namespace aspect
 									(rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
 										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
 										* fs_fe_face_values.JxW (q_index); 
-                                                                        cell_matrix(i,j) += matrix_contribution;
+									
+									cell_matrix(i,j) += matrix_contribution;
                                                                         
-                                                                        assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" j="<<j<<" matrix_contribution="<<matrix_contribution<<" ";
-                                                                        assembly <<std::endl;
+									// assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" j="<<j<<" matrix_contribution="<<matrix_contribution<<" ";
+									// assembly <<std::endl;
+																		
+									// cell_laplace(i,j) += (fe_values.shape_grad (i, q_index)  * fe_values.shape_grad (j, q_index)) 
+															// * fe_values.JxW (q_index); 
+										
+									// cell_mass(i,j) += (fe_values.shape_value (i, q_index) * fe_values.shape_value (j, q_index))
+															// * fe_values.JxW (q_index); 																		
                                                                         
 										/*
 									cell_rhs(i,j) += (displacement * sim.time_step * diffusivity * (1-theta) * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
@@ -748,7 +844,7 @@ namespace aspect
 																																
 						if (sim.timestep_number == 0)	
 						{							
-							std::ofstream myfile_matrix("matrix", std::ios::app);
+							std::ofstream myfile_matrix("cell_matrix", std::ios::app);
 							
 							for (unsigned int i=0; i<cell_matrix.m(); i++) 
 							{	
@@ -764,7 +860,7 @@ namespace aspect
 							myfile_rhs.close();							
 						}
 						
-						mass_matrix_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
+						blank_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
                                                                   local_dof_indices, system_matrix, system_rhs, false);
 						
 						//std::cout<<"system_matrix.m()="<<system_matrix.m()<<"\n";
@@ -866,7 +962,9 @@ namespace aspect
 									PreconditionIdentity());
 									
 		std::cout<<"Diffusion equation solved in "<<solver_control.last_step() << " iterations."<< std::endl;							
-		mass_matrix_constraints.distribute (solution);
+		
+		// Do I need this?? ************
+		//constraints.distribute (solution);
 		
 		LinearAlgebra::Vector output_temp(mesh_locally_owned, mesh_locally_relevant, sim.mpi_communicator);
 		// std::cout<<"output_temp size:" <<output_temp.size()<<"\n";
@@ -876,6 +974,17 @@ namespace aspect
 		output_temp = solution;
 		//std::cout<<"solution size ="<<solution.size()<<std::endl;
 		//std::cout<<"rhs size ="<<system_rhs.size()<<std::endl;
+		
+		// if (sim.timestep_number==0)
+		// {
+			// std::ofstream file_system_matrix("system_matrix", std::ios::app);
+			// for (int i =0; i<system_matrix.size();i++)
+				// file_system_matrix << system_matrix[i]<<" ";
+			// file_system_matrix << std::endl;
+			// file_system_matrix.close();		
+		// }
+		
+		
 		std::ofstream file_sol("sol", std::ios::app);
 		for (int i =0; i<solution.size();i++)
 			file_sol << solution[i]<<" ";
