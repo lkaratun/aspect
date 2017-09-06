@@ -598,7 +598,13 @@ namespace aspect
 		double max_rhs = -999;
 		double norm = 0;
 		double theta = 1;
+                int cell_counter = 0;
+                std::ofstream assembly("assembly", std::ios::app);
 		
+                assembly <<std::endl;
+                assembly << "=========== Timestep "<<sim.timestep_number<<" ===========";
+                assembly <<std::endl;
+                
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
 		{
@@ -612,7 +618,11 @@ namespace aspect
 					if (sim.parameters.free_surface_boundary_indicators.find(boundary_indicator)
 						== sim.parameters.free_surface_boundary_indicators.end())
 						continue;	
-				
+                                                
+                                        
+                                                assembly <<std::endl;
+                                                assembly << "=========== Cell no. "<<cell_counter++<<" ===========";
+                                                assembly <<std::endl;
 				
 						//recompute values, gradients of the shape functions and determinants of the Jacobian matrices for the current cell
 						fs_fe_face_values.reinit (fscell, face_no);
@@ -631,6 +641,7 @@ namespace aspect
 						//Integrate over the fscell by looping over quadrature points
 						for (unsigned int q_index=0; q_index<n_face_q_points; ++q_index)
 						{
+                                                        const Point<dim> p = fs_fe_face_values.quadrature_point(q_index);
 							double displacement = local_displacements[q_index];
 							disp.push_back(displacement);
 							
@@ -656,10 +667,15 @@ namespace aspect
 								rot =  I - rot;
 								
 								//Set right hand side -- do we need rot vector? 
-								cell_rhs(i) += (fs_fe_face_values.shape_value (i, q_index) 
+								double rhs_contribution = (fs_fe_face_values.shape_value (i, q_index) 
 												* displacement 
 												- sim.time_step*diffusivity*(1-theta)*fs_fe_face_values.shape_value (i, q_index)*displacement)
 												* fs_fe_face_values.JxW (q_index);
+                                                                cell_rhs(i) += rhs_contribution;
+                                                                
+                                                                assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" shape_value="<<fs_fe_face_values.shape_value(i, q_index)<<" shape_grad="<<fs_fe_face_values.shape_grad(i, q_index)<<" rhs_contribution="<<rhs_contribution<<" ";
+                                                                assembly <<std::endl;
+                                                                
 								if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
 
 								
@@ -683,10 +699,15 @@ namespace aspect
 										continue;
 									/*fs_fe_face_values.shape_grad (i|j, q_index) - gradients of shape functions*/
 									
-									cell_matrix(i,j) += (sim.time_step*diffusivity * theta * 
+									double matrix_contribution = (sim.time_step*diffusivity * theta * 
 									(rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
 										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
 										* fs_fe_face_values.JxW (q_index); 
+                                                                        cell_matrix(i,j) += matrix_contribution;
+                                                                        
+                                                                        assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" j="<<j<<" matrix_contribution="<<matrix_contribution<<" ";
+                                                                        assembly <<std::endl;
+                                                                        
 										/*
 									cell_rhs(i,j) += (displacement * sim.time_step * diffusivity * (1-theta) * (rot*fs_fe_face_values.shape_grad (i, q_index)  * rot*fs_fe_face_values.shape_grad (j, q_index)) 
 										+  (fs_fe_face_values.shape_value (i, q_index) * fs_fe_face_values.shape_value (j, q_index)))
@@ -708,10 +729,12 @@ namespace aspect
 										// * fs_fe_face_values.JxW (q_index);            // need SURFACE gradient				
 									
 								}	
-							}		
+							}
+                                                        
+                                                        
+                                                        	
 							
 							
-							const Point<dim> p = fs_fe_face_values.quadrature_point(q_index);
 							xu temp;
 							temp.x=p[0];
 							temp.y=displacement;//p[dim-1];
@@ -765,6 +788,9 @@ namespace aspect
 						// }
 					}
 		}
+                
+                assembly.close();
+                
 		// std::cout<<"ts = "<<ts<<"sim.timestep_number = "<<sim.timestep_number<<std::endl;
 		// std::cout<<"len (u[ts]) = "<<u[ts].size()<<std::endl;
 		std::sort(u[ts].begin(), u[ts].end(), xuCompare);
