@@ -530,10 +530,10 @@ namespace aspect
                                              // (*p).first.first, (*p).first.second, (*p).second, mass_matrix_constraints);
     
 		// //Zero out the displacement for the zero-velocity boundary indicators
-    // VectorTools::interpolate_boundary_values (free_surface_dof_handler, 0,
-                                                // ZeroFunction<dim>(dim), mass_matrix_constraints);		
-    // VectorTools::interpolate_boundary_values (free_surface_dof_handler, 1,
-                                                // ZeroFunction<dim>(dim), mass_matrix_constraints);																									
+    VectorTools::interpolate_boundary_values (free_surface_dof_handler, 0,
+                                                ZeroFunction<dim>(dim), constraints);		
+    VectorTools::interpolate_boundary_values (free_surface_dof_handler, 1,
+                                                ZeroFunction<dim>(dim), constraints);																									
 		
 		
 		//std::cout<<"completed periodic boundaries loop\n";
@@ -860,7 +860,7 @@ namespace aspect
 							myfile_rhs.close();							
 						}
 						
-						blank_constraints.distribute_local_to_global (cell_matrix, cell_rhs,
+						constraints.distribute_local_to_global (cell_matrix, cell_rhs,
                                                                   local_dof_indices, system_matrix, system_rhs, false);
 						
 						//std::cout<<"system_matrix.m()="<<system_matrix.m()<<"\n";
@@ -940,13 +940,13 @@ namespace aspect
 																									ZeroFunction<dim>(),
 																									boundary_values);				
 			}
-		}
+		}*/
 		// Apply b.c. to the system of equations
-		MatrixTools::apply_boundary_values (boundary_values,
-																				system_matrix,
-																				solution,
-																				system_rhs);		
-		*/
+		// MatrixTools::apply_boundary_values (constraints,
+																				// system_matrix,
+																				// solution,
+																				// system_rhs);		
+		
 		system_rhs.compress (VectorOperation::add);
 		system_matrix.compress(VectorOperation::add);	
 		
@@ -1150,7 +1150,7 @@ namespace aspect
 		//calculating norm of error against resolution
 		
 		std::ofstream myfile6("u-ua_norm", std::ios::app);
-		if (sim.time>=10)
+		if (sim.timestep_number==3)
 		{
 			for (unsigned int j=0; j<ua[ts].size(); ++j) 
 				norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
