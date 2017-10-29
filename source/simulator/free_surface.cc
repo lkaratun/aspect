@@ -505,7 +505,7 @@ namespace aspect
 	template <int dim>
   void FreeSurfaceHandler<dim>::diffuse_surface(LinearAlgebra::Vector &output)
 	{
-		//std::cout<<"entered diffuse_surface\n";
+		std::cout<<"entered diffuse_surface\n";
 		const unsigned int ts = sim.timestep_number;
 		
 		std::cout <<"Time = " <<sim.time <<std::endl;
@@ -536,7 +536,7 @@ namespace aspect
                                                 ZeroFunction<dim>(dim), constraints);																									
 		
 		
-		//std::cout<<"completed periodic boundaries loop\n";
+	std::cout<<"completed periodic boundaries loop\n";
     constraints.close();
 		
 #ifdef ASPECT_USE_PETSC
@@ -562,7 +562,7 @@ namespace aspect
 #endif
 	
 
-
+	std::cout<<"completed sparsity patterns setup\n";
 	
 		
 		
@@ -581,6 +581,9 @@ namespace aspect
 	FEFaceValues<dim> fe_face_values (*sim.mapping, sim.finite_element, face_quadrature, update_flags);
 		LinearAlgebra::Vector displacements = this->mesh_displacements;//free_surface_dof_handler.mesh_displacements;
 
+		
+		std::cout<<"completed FEValues setup\n";
+		
 		double theta = 1;
 		
 		
@@ -686,11 +689,11 @@ namespace aspect
 		double norm = 0;
 		
                 int cell_counter = 0;
-                std::ofstream assembly("assembly", std::ios::app);
+                // std::ofstream assembly("assembly", std::ios::app);
 		
-                assembly <<std::endl;
-                assembly << "=========== Timestep "<<sim.timestep_number<<" ===========";
-                assembly <<std::endl;
+                // assembly <<std::endl;
+                // assembly << "=========== Timestep "<<sim.timestep_number<<" ===========";
+                // assembly <<std::endl;
                 
 		//Loop over cells
 		for (; cell!=endc; ++cell, ++fscell)
@@ -707,9 +710,9 @@ namespace aspect
 						continue;	
                                                 
                                         
-                                                assembly <<std::endl;
-                                                assembly << "=========== Cell no. "<<cell_counter++<<" ===========";
-                                                assembly <<std::endl;
+                                                // assembly <<std::endl;
+                                                // assembly << "=========== Cell no. "<<cell_counter++<<" ===========";
+                                                // assembly <<std::endl;
 				
 						//recompute values, gradients of the shape functions and determinants of the Jacobian matrices for the current cell
 						fs_fe_face_values.reinit (fscell, face_no);
@@ -762,8 +765,8 @@ namespace aspect
 												* fs_fe_face_values.JxW (q_index);
 								cell_rhs(i) += rhs_contribution;
 								
-								assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" shape_value="<<fs_fe_face_values.shape_value(i, q_index)<<" shape_grad="<<fs_fe_face_values.shape_grad(i, q_index)<<" rhs_contribution="<<rhs_contribution<<" ";
-								assembly <<std::endl;
+								// assembly << "q_index="<<q_index<<" q_x="<<p[0]<<" i="<<i<<" shape_value="<<fs_fe_face_values.shape_value(i, q_index)<<" shape_grad="<<fs_fe_face_values.shape_grad(i, q_index)<<" rhs_contribution="<<rhs_contribution<<" ";
+								// assembly <<std::endl;
                                                                 
 								// if (sim.timestep_number==0) std::cout<<fs_fe_face_values.shape_value (i, q_index)<<" ";
 
@@ -831,34 +834,34 @@ namespace aspect
                                                         	
 							
 							
-							xu temp;
-							temp.x=p[0];
-							temp.y=displacement;//p[dim-1];
-							temp.jxw = fs_fe_face_values.JxW (q_index);
-							u[ts].push_back(temp);							
+							// xu temp;
+							// temp.x=p[0];
+							// temp.y=displacement;//p[dim-1];
+							// temp.jxw = fs_fe_face_values.JxW (q_index);
+							// u[ts].push_back(temp);							
 							
 						}
 
 						
 																																	
 																																
-						if (sim.timestep_number == 0)	
-						{							
-							std::ofstream myfile_matrix("cell_matrix", std::ios::app);
+						// if (sim.timestep_number == 0)	
+						// {							
+							// std::ofstream myfile_matrix("cell_matrix", std::ios::app);
 							
-							for (unsigned int i=0; i<cell_matrix.m(); i++) 
-							{	
-								for (unsigned int j=0; j<cell_matrix.n(); j++)
-									myfile_matrix << cell_matrix[i][j]<<" ";
-								myfile_matrix <<std::endl;
-							}
-							myfile_matrix.close();		
+							// for (unsigned int i=0; i<cell_matrix.m(); i++) 
+							// {	
+								// for (unsigned int j=0; j<cell_matrix.n(); j++)
+									// myfile_matrix << cell_matrix[i][j]<<" ";
+								// myfile_matrix <<std::endl;
+							// }
+							// myfile_matrix.close();		
 
-							std::ofstream myfile_rhs("rhs", std::ios::app);
-							for (unsigned int i=0; i<cell_rhs.size(); ++i) 
-								myfile_rhs << cell_rhs[i]<<" ";
-							myfile_rhs.close();							
-						}
+							// std::ofstream myfile_rhs("rhs", std::ios::app);
+							// for (unsigned int i=0; i<cell_rhs.size(); ++i) 
+								// myfile_rhs << cell_rhs[i]<<" ";
+							// myfile_rhs.close();							
+						// }
 						
 						constraints.distribute_local_to_global (cell_matrix, cell_rhs,
                                                                   local_dof_indices, system_matrix, system_rhs, false);
@@ -885,33 +888,33 @@ namespace aspect
 					}
 		}
                 
-                assembly.close();
+                //assembly.close();
                 
 		// std::cout<<"ts = "<<ts<<"sim.timestep_number = "<<sim.timestep_number<<std::endl;
 		// std::cout<<"len (u[ts]) = "<<u[ts].size()<<std::endl;
-		std::sort(u[ts].begin(), u[ts].end(), xuCompare);
+		// std::sort(u[ts].begin(), u[ts].end(), xuCompare);
 		// for (unsigned int j=0; j<u[ts].size(); ++j) 
 			// std::cout<<u[ts][j].x<<" ";
 		
 		
 		
-		std::ofstream myfile("u", std::ios::app);
-		std::cout<<"Max disp = "<<*max_element(std::begin(disp), std::end(disp))<<std::endl;
+		// std::ofstream myfile("u", std::ios::app);
+		// std::cout<<"Max disp = "<<*max_element(std::begin(disp), std::end(disp))<<std::endl;
 		
 		
 		
-		for (int i = 0; i<system_rhs.size();i++)
-			if (max_rhs<system_rhs(i)) max_rhs=system_rhs(i);
-		std::cout<<"Max rhs = "<<max_rhs<<std::endl;
-		//std::cout<<"Max rhs = "<<*max_element(std::begin(system_rhs), std::end(system_rhs))<<std::endl;
+		// for (int i = 0; i<system_rhs.size();i++)
+			// if (max_rhs<system_rhs(i)) max_rhs=system_rhs(i);
+		// std::cout<<"Max rhs = "<<max_rhs<<std::endl;
+		// //std::cout<<"Max rhs = "<<*max_element(std::begin(system_rhs), std::end(system_rhs))<<std::endl;
 		
-		for (unsigned int j=0; j<u[ts].size(); ++j) 
-			{
-				myfile << u[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
-				myfile << u[ts][j].y<<std::endl;
-			}
-		myfile << std::endl;
-		myfile.close();		
+		// for (unsigned int j=0; j<u[ts].size(); ++j) 
+			// {
+				// myfile << u[ts][j].x<<" ";//std::ostream_iterator<int>(std::cout, " "));
+				// myfile << u[ts][j].y<<std::endl;
+			// }
+		// myfile << std::endl;
+		// myfile.close();		
 		
 		
 		
@@ -985,17 +988,17 @@ namespace aspect
 		// }
 		
 		
-		std::ofstream file_sol("sol", std::ios::app);
-		for (int i =0; i<solution.size();i++)
-			file_sol << solution[i]<<" ";
-		file_sol << std::endl;
-		file_sol.close();
+		// std::ofstream file_sol("sol", std::ios::app);
+		// for (int i =0; i<solution.size();i++)
+			// file_sol << solution[i]<<" ";
+		// file_sol << std::endl;
+		// file_sol.close();
 			
-		std::ofstream file_system_rhs("system_rhs", std::ios::app);
-		for (int i =0; i<system_rhs.size();i++)
-			file_system_rhs << system_rhs[i]<<" ";
-		file_system_rhs << std::endl;
-		file_system_rhs.close();			
+		// std::ofstream file_system_rhs("system_rhs", std::ios::app);
+		// for (int i =0; i<system_rhs.size();i++)
+			// file_system_rhs << system_rhs[i]<<" ";
+		// file_system_rhs << std::endl;
+		// file_system_rhs.close();			
 		
 		output_temp -= displacements; //resulting elevation - initial elevation
 		//UNCOMMENT//output_temp.sadd(1,displacements);
@@ -1006,169 +1009,170 @@ namespace aspect
 		//=====
 		
 		//Analytical solution
-		
-		//Checking cooling from constant initial temperature
-		// double u0 = 0.1;
-		// for (int i=0; i<u[0].size(); i++)
-			// u[0][i].y=u0;
-		
-		
-		double time_ua = std::max(sim.time-sim.time_step/*sim.old_time_step*/,0.0);
-		
-		const double L = 1; //x extent of the domain
-		//const double T = L*L / diffusivity; //charachteristic temperature
-		//const double U = 0.1; //initial displacement amplitude
-		
-		static displacements_matrix ua;
-		std::vector<double> u_diff(u[ts].size(), 0);
-		std::vector<double> ua_diff(u[ts].size(), 0);
-		ua.push_back(displacements_vector());
-		
-		std::cout<<"u[0]size="<<u[0].size()<<" ";
-		
-		double eps = 1e-10;
-		
-		//double max_x = 1;//sim.geometry_model->get_extents()[0];
-		
-		for (int i = 0; i<u[0].size(); ++i)
-		{
-			xu temp;
-			temp.x=u[ts][i].x;
+		// if (MPI_COMM_RANK==0)
+		// {
+			// //Checking cooling from constant initial temperature
+			// // double u0 = 0.1;
+			// // for (int i=0; i<u[0].size(); i++)
+				// // u[0][i].y=u0;
 			
-			int counter = 0;
-			double series = 0;
-			for (int n=1; n<=1000; n++)
-			{
+			
+			// double time_ua = std::max(sim.time-sim.time_step/*sim.old_time_step*/,0.0);
+			
+			// const double L = 1; //x extent of the domain
+			// //const double T = L*L / diffusivity; //charachteristic temperature
+			// //const double U = 0.1; //initial displacement amplitude
+			
+			// static displacements_matrix ua;
+			// std::vector<double> u_diff(u[ts].size(), 0);
+			// std::vector<double> ua_diff(u[ts].size(), 0);
+			// ua.push_back(displacements_vector());
+			
+			// std::cout<<"u[0]size="<<u[0].size()<<" ";
+			
+			// double eps = 1e-10;
+			
+			// //double max_x = 1;//sim.geometry_model->get_extents()[0];
+			
+			// for (int i = 0; i<u[0].size(); ++i)
+			// {
+				// xu temp;
+				// temp.x=u[ts][i].x;
 				
-				//cooling of a rod from constant initial temperature
-				//double term = exp(-(2*n-1)*(2*n-1)*M_PI*M_PI*time_ua) * std::sin((2*n-1)*M_PI*temp.x)/(2*n-1);
-				
-				// if (n==1)
+				// int counter = 0;
+				// double series = 0;
+				// for (int n=1; n<=1000; n++)
 				// {
-				// //explicit Bn
-				// double Bn = 4 * u[0][i].y / M_PI;
-				// std::cout << "Bn expl = "<<Bn<<" ";
-				
-				// //numerical Bn calculation
-				// double Bnn = 0; double y = 0;
-				// double num_segments = 1000;
-				// double step = L/num_segments;
-				// double np = n*M_PI;
-				// for (int k = 0; k<num_segments; k++)
-				// {
-					// //std::cout << "k = "<<k <<" ";
-					// y = std::sin(np*(k+0.5)*step) * 0.1;
-					// Bnn = Bnn + 2* y * step;
-				// }
-				// std::cout << "Bnn = "<<Bnn<<" ";
-				// }
-				//Diffusing a hat shaped initial topography
-				double pn = n*M_PI;
-				
-				//explicit Bn calculation
-				//double Bn = (-0.2/np)*(L/2 - (2*std::sin(np*L/2)/np) - L/2*std::cos (np*L) + std::sin(np*L)/np);
-				//online calculated formula
-				//double Bn1 = -113*std::sin(pn)/(1775*M_PI*n*n) + (std::cos(3927*n/2500)/(10*pn) - (35969*std::sin(3927*n/2500)/(1000*n)
-					//- std::cos(3927*n/2500)/7569)/(1775*n));
-				//if (n==1) std::cout << "Bn1 = "<<Bn1 <<" ";
-				//double Bn=4/(5*M_PI*M_PI);
-				//numerical Bn calculation
-				// double Bn = 0; double y = 0;
-				// double num_segments = 1000;
-				// double step = L/num_segments;
-				// for (int k = 0; k<num_segments; k++)
-				// {
-					// //std::cout << "k = "<<k <<" ";
-					// y = std::sin(np*k*step) * ( -0.2 * std::abs(L/2 - k*step) + 0.1);
-					// Bn = Bn + y * step;
-				// }
-				
-				double Bn = 2*F_def(1,n);
-				double term = Bn * std::sin (pn*temp.x) * std::exp(-pn*pn*diffusivity*time_ua);
-				series += term;
-				//if (n==1)
-				//{
-					//std::cout << "Bn = "<<Bn<<" ";
-					// std::cout << "exp = "<<std::exp(-np*np*diffusivity*time_ua)<<" ";
-					//std::cout << "series = "<<series <<" ";
-					// std::cout << "term = "<<term <<" ";					
-				//}				
-				
-				if (std::abs(term) < eps)
-					counter++;
-				else 
-					counter=0;
-				if (counter>3)
-				{
-					std::cout << "n reached= "<<n<<" ";
-					break;
-				}
-			}
-			//if (i==0)
-				//std::cout << std::endl<<"n (series)= " <<n<<" series = "<< series <<std::endl;
-			
-			//if (ts==0)
-				//temp.y = u[ts][i].y;
-			//else
-				//temp.y=4 * u[0][i].y * series / M_PI ;
-				temp.y = series;
-			ua[ts].push_back(temp);				
-			
-			
-		}
-		
-		std::ofstream myfile2("ua", std::ios::app);
-		std::ofstream myfile3("u_diff", std::ios::app);
-		std::ofstream myfile4("ua_diff", std::ios::app);
-		std::ofstream myfile5("u-ua", std::ios::app);
-		
-		
-		
-		
-		for (unsigned int j=0; j<ua[ts].size(); ++j) 
-		{
-			myfile2 << ua[ts][j].x<<" ";
-			myfile2 << ua[ts][j].y<<std::endl;
-			myfile5 << ua[ts][j].x<<" ";
-			myfile5 << u[ts][j].y-ua[ts][j].y<<std::endl;
-			
-			if (ts)
-			{
-				if (j==15)
-				{
-					myfile3 << ts<<" ";
-					myfile3 << u[ts][j].y-u[ts-1][j].y<<std::endl;
-					myfile4 << ts<<" ";
-					myfile4 << ua[ts][j].y-ua[ts-1][j].y<<std::endl;
 					
-				}
-			}
+					// //cooling of a rod from constant initial temperature
+					// //double term = exp(-(2*n-1)*(2*n-1)*M_PI*M_PI*time_ua) * std::sin((2*n-1)*M_PI*temp.x)/(2*n-1);
+					
+					// // if (n==1)
+					// // {
+					// // //explicit Bn
+					// // double Bn = 4 * u[0][i].y / M_PI;
+					// // std::cout << "Bn expl = "<<Bn<<" ";
+					
+					// // //numerical Bn calculation
+					// // double Bnn = 0; double y = 0;
+					// // double num_segments = 1000;
+					// // double step = L/num_segments;
+					// // double np = n*M_PI;
+					// // for (int k = 0; k<num_segments; k++)
+					// // {
+						// // //std::cout << "k = "<<k <<" ";
+						// // y = std::sin(np*(k+0.5)*step) * 0.1;
+						// // Bnn = Bnn + 2* y * step;
+					// // }
+					// // std::cout << "Bnn = "<<Bnn<<" ";
+					// // }
+					// //Diffusing a hat shaped initial topography
+					// double pn = n*M_PI;
+					
+					// //explicit Bn calculation
+					// //double Bn = (-0.2/np)*(L/2 - (2*std::sin(np*L/2)/np) - L/2*std::cos (np*L) + std::sin(np*L)/np);
+					// //online calculated formula
+					// //double Bn1 = -113*std::sin(pn)/(1775*M_PI*n*n) + (std::cos(3927*n/2500)/(10*pn) - (35969*std::sin(3927*n/2500)/(1000*n)
+						// //- std::cos(3927*n/2500)/7569)/(1775*n));
+					// //if (n==1) std::cout << "Bn1 = "<<Bn1 <<" ";
+					// //double Bn=4/(5*M_PI*M_PI);
+					// //numerical Bn calculation
+					// // double Bn = 0; double y = 0;
+					// // double num_segments = 1000;
+					// // double step = L/num_segments;
+					// // for (int k = 0; k<num_segments; k++)
+					// // {
+						// // //std::cout << "k = "<<k <<" ";
+						// // y = std::sin(np*k*step) * ( -0.2 * std::abs(L/2 - k*step) + 0.1);
+						// // Bn = Bn + y * step;
+					// // }
+					
+					// double Bn = 2*F_def(1,n);
+					// double term = Bn * std::sin (pn*temp.x) * std::exp(-pn*pn*diffusivity*time_ua);
+					// series += term;
+					// //if (n==1)
+					// //{
+						// //std::cout << "Bn = "<<Bn<<" ";
+						// // std::cout << "exp = "<<std::exp(-np*np*diffusivity*time_ua)<<" ";
+						// //std::cout << "series = "<<series <<" ";
+						// // std::cout << "term = "<<term <<" ";					
+					// //}				
+					
+					// if (std::abs(term) < eps)
+						// counter++;
+					// else 
+						// counter=0;
+					// if (counter>3)
+					// {
+						// std::cout << "n reached= "<<n<<" ";
+						// break;
+					// }
+				// }
+				// //if (i==0)
+					// //std::cout << std::endl<<"n (series)= " <<n<<" series = "<< series <<std::endl;
+				
+				// //if (ts==0)
+					// //temp.y = u[ts][i].y;
+				// //else
+					// //temp.y=4 * u[0][i].y * series / M_PI ;
+					// temp.y = series;
+				// ua[ts].push_back(temp);				
+				
+				
+			// }
+		// }
+		// std::ofstream myfile2("ua", std::ios::app);
+		// std::ofstream myfile3("u_diff", std::ios::app);
+		// std::ofstream myfile4("ua_diff", std::ios::app);
+		// std::ofstream myfile5("u-ua", std::ios::app);
+		
+		
+		
+		
+		// for (unsigned int j=0; j<ua[ts].size(); ++j) 
+		// {
+			// myfile2 << ua[ts][j].x<<" ";
+			// myfile2 << ua[ts][j].y<<std::endl;
+			// myfile5 << ua[ts][j].x<<" ";
+			// myfile5 << u[ts][j].y-ua[ts][j].y<<std::endl;
 			
-		}
+			// if (ts)
+			// {
+				// if (j==15)
+				// {
+					// myfile3 << ts<<" ";
+					// myfile3 << u[ts][j].y-u[ts-1][j].y<<std::endl;
+					// myfile4 << ts<<" ";
+					// myfile4 << ua[ts][j].y-ua[ts-1][j].y<<std::endl;
+					
+				// }
+			// }
+			
+		// }
 			
 			
 		//calculating norm of error against resolution
 		
-		std::ofstream myfile6("u-ua_norm", std::ios::app);
-		if (sim.timestep_number==3)
-		{
-			for (unsigned int j=0; j<ua[ts].size(); ++j) 
-				norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
-			norm = pow(norm, 0.5);
-			myfile6 << sim.parameters.initial_global_refinement<<" ";
-			myfile6 << norm<<std::endl;
-		}
+		// std::ofstream myfile6("u-ua_norm", std::ios::app);
+		// if (sim.timestep_number==3)
+		// {
+			// for (unsigned int j=0; j<ua[ts].size(); ++j) 
+				// norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
+			// norm = pow(norm, 0.5);
+			// myfile6 << sim.parameters.initial_global_refinement<<" ";
+			// myfile6 << norm<<std::endl;
+		// }
 		
 			
-		myfile2 << std::endl;
-		myfile5 << std::endl;
-		// myfile3 << std::endl;
-		// myfile4 << std::endl;
-		myfile2.close();			
-		myfile3.close();			
-		myfile4.close();			
-		myfile5.close();
-		myfile6.close();
+		// myfile2 << std::endl;
+		// myfile5 << std::endl;
+		// // myfile3 << std::endl;
+		// // myfile4 << std::endl;
+		// myfile2.close();			
+		// myfile3.close();			
+		// myfile4.close();			
+		// myfile5.close();
+		// myfile6.close();
 		//Compare obtained solution with analytical solution
 		
 		
