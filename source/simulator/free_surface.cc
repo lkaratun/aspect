@@ -306,9 +306,9 @@ namespace aspect
     //Make the constraints for the elliptic problem.  On the free surface, we
     //constrain mesh velocity to be v.n, on free slip it is constrainted to
     //be tangential, and on no slip boundaries it is zero.
-    //std::cout<<"Entered execute()\n";
+    std::cout<<"Entered execute()\n";
 		make_constraints();
-		//std::cout<<"make_constraints complete\n";
+		std::cout<<"make_constraints complete\n";
 
 
     // Assemble and solve the vector Laplace problem which determines
@@ -505,6 +505,10 @@ namespace aspect
 	template <int dim>
   void FreeSurfaceHandler<dim>::diffuse_surface(LinearAlgebra::Vector &output)
 	{
+		
+		
+		
+		
 		std::cout<<"entered diffuse_surface\n";
 		const unsigned int ts = sim.timestep_number;
 		
@@ -1705,11 +1709,11 @@ namespace aspect
 		mesh_displacements = distributed_initial_displacements;
 		
 		
-		std::ofstream file_initial("initial", std::ios::app);
-		for (int i =0; i<distributed_initial_displacements.size();i++)
-			file_initial << distributed_initial_displacements[i]<<" ";
-		file_initial << std::endl;
-		file_initial.close();		
+		// std::ofstream file_initial("initial", std::ios::app);
+		// for (int i =0; i<distributed_initial_displacements.size();i++)
+			// file_initial << distributed_initial_displacements[i]<<" ";
+		// file_initial << std::endl;
+		// file_initial.close();		
 		//std::cout<<"Setup_DOFs complete\n";
 	}
 
