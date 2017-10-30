@@ -219,6 +219,16 @@ namespace aspect
       return std::min (std::max (d, 0.), maximal_depth());
     }
 
+	
+    template <int dim>
+    double
+    Box<dim>::height_above_original_surface(const Point<dim> &position) const
+    {
+      const double d = extents[dim-1] - (position(dim-1)-box_origin[dim-1]);
+      return std::min (std::max (d, -maximal_depth()), maximal_depth());
+    }	
+	
+	
 
     template <int dim>
     Point<dim>
