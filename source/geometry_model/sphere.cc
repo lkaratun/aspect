@@ -87,6 +87,12 @@ namespace aspect
       return std::min (std::max (R-position.norm(), 0.), maximal_depth());
     }
 
+    template <int dim>
+    double
+    Sphere<dim>::height_above_original_surface(const Point<dim> &position) const
+    {
+      return std::min(std::max(radius()-position.norm(),-maximal_depth()), maximal_depth());
+    }		
 
 
     template <int dim>

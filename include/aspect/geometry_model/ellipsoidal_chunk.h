@@ -177,6 +177,10 @@ namespace aspect
         double
         depth(const Point<dim> &position) const;
 
+        virtual
+        double
+        height_above_original_surface(const Point<dim> &position) const;		
+		
         /**
          * Returns a point in the center of the domain.
          */

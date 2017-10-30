@@ -56,8 +56,8 @@ namespace aspect
       std::vector<std::pair<Point<dim>,double> > stored_values;	  	
 
 	  
-	  GeometryModel::Box<dim> *gm = dynamic_cast<GeometryModel::Box<dim> *>
-                                        (const_cast<GeometryModel::Interface<dim> *>(&this->get_geometry_model()));
+	  // GeometryModel::Box<dim> *gm = dynamic_cast<GeometryModel::Box<dim> *>
+                                        // (const_cast<GeometryModel::Interface<dim> *>(&this->get_geometry_model()));
 										
       // loop over all of the surface cells and save the elevation to stored_value
       typename parallel::distributed::Triangulation<dim>::active_cell_iterator cell = this->get_triangulation().begin_active(),
@@ -76,7 +76,7 @@ namespace aspect
                 for (unsigned int corner = 0; corner < face_corners.size(); ++corner)
                   {
                     Point<dim> vertex = face_vals.quadrature_point(corner);
-                    double elevation = gm->height_above_original_surface(vertex);
+                    double elevation = this->get_geometry_model().height_above_original_surface(vertex);
 					stored_values.push_back (std::make_pair(vertex, elevation));
                   }
               }

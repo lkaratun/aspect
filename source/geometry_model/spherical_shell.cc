@@ -265,6 +265,12 @@ namespace aspect
       return std::min (std::max (R1-position.norm(), 0.), maximal_depth());
     }
 
+    template <int dim>
+    double
+    SphericalShell<dim>::height_above_original_surface(const Point<dim> &position) const
+    {
+      return std::min(std::max(inner_radius()-position.norm(),-maximal_depth()), maximal_depth());
+    }		
 
 
     template <int dim>
