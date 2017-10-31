@@ -222,16 +222,16 @@ namespace aspect
       {
         prm.enter_subsection("Topography");
         {
-          prm.declare_entry ("Output to file", "False",
+          prm.declare_entry ("Output to file", "false",
                              Patterns::List(Patterns::Bool()),
                              "Whether or not to write topography to a text file named named"
                              "'topography.NNNNN' in the output directory");
 
-          prm.declare_entry ("Output statistics", "True",
+          prm.declare_entry ("Output statistics", "true",
                              Patterns::List(Patterns::Bool()),
                              "Whether or not to output topography statistics to screen and "
                              "statistics file in the output directory");
-          prm.declare_entry ("Time between text output", "1e8",
+          prm.declare_entry ("Time between text output", "0.",
                              Patterns::Double (0),
                              "The time interval between each generation of "
                              "text output files. A value of zero indicates "
@@ -257,7 +257,7 @@ namespace aspect
         {
           write_to_file        = prm.get_bool ("Output to file");
           write_statistics       = prm.get_bool ("Output statistics");
-          output_interval = prm.get_double ("Time between graphical output");
+          output_interval = prm.get_double ("Time between text output");
           if (this->convert_output_to_years())
             output_interval *= year_in_seconds;
         }

@@ -415,7 +415,7 @@ namespace aspect
     double
     Chunk<dim>::height_above_original_surface(const Point<dim> &position) const
     {
-      return std::min (std::max (point2[0]-position.norm(), -maximal_depth()), maximal_depth());
+      return std::min (std::max (position.norm()-point2[0], -maximal_depth()), maximal_depth());
     }
 
 
