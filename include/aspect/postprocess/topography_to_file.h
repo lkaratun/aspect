@@ -45,6 +45,56 @@ namespace aspect
          */
         virtual
         std::pair<std::string,std::string> execute (TableHandler &statistics);
+
+        /**
+         * @name Functions used in dealing with run-time parameters
+         * @{
+         */
+        /**
+         * Declare the parameters this class takes through input files.
+         */
+        static
+        void
+        declare_parameters (ParameterHandler &prm);
+
+        /**
+         * Read the parameters this class declares from the parameter file.
+         */
+        virtual
+        void
+        parse_parameters (ParameterHandler &prm);
+        /**
+         * @}
+         */
+
+
+      private:
+        /**
+         * Whether or not to produce text files with topography values
+         */
+        bool write_to_file;
+
+        /**
+        * Whether or not to output topography statistics to screen and statistics file
+        */
+        bool write_statistics;
+
+
+
+
+        /**
+         * Interval between the generation of text output. This parameter
+         * is read from the input file and consequently is not part of the
+         * state that needs to be saved and restored.
+         */
+        double output_interval;
+
+        /**
+         * A time (in seconds) at which the last text output was supposed
+         * to be produced. Used to check for the next necessary output time.
+         */
+        double last_output_time;
+
     };
   }
 }
