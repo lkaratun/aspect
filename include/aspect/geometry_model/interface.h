@@ -131,8 +131,8 @@ namespace aspect
         double depth(const Point<dim> &position) const = 0;
 
         virtual
-        double height_above_original_surface(const Point<dim> &position) const = 0;		
-		
+        double height_above_original_surface(const Point<dim> &position) const = 0;
+
         /**
          * Takes the Cartesian points (x,z or x,y,z) and returns standardized
          * coordinates which are most 'natural' to the geometry model. For a box

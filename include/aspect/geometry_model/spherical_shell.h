@@ -86,9 +86,9 @@ namespace aspect
         double depth(const Point<dim> &position) const;
 
         virtual
-        double height_above_original_surface(const Point<dim> &position) const;        
-		
-		virtual
+        double height_above_original_surface(const Point<dim> &position) const;
+
+        virtual
         Point<dim> representative_point(const double depth) const;
 
         virtual

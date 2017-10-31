@@ -45,7 +45,7 @@ namespace aspect
     TopographyToFile<dim>::execute (TableHandler &)
     {
       const types::boundary_id relevant_boundary = this->get_geometry_model().translate_symbolic_boundary_name_to_id ("top");
-     
+
       // Get a quadrature rule that exists only on the corners
       QTrapez<dim-1> face_corners;
       FEFaceValues<dim> face_vals (this->get_mapping(), this->get_fe(), face_corners, update_quadrature_points);
@@ -53,16 +53,16 @@ namespace aspect
       // have a stream into which we write the data. the text stream is then
       // later sent to processor 0
       std::ostringstream output;
-      std::vector<std::pair<Point<dim>,double> > stored_values;	  	
+      std::vector<std::pair<Point<dim>,double> > stored_values;
 
-	  
-	  // GeometryModel::Box<dim> *gm = dynamic_cast<GeometryModel::Box<dim> *>
-                                        // (const_cast<GeometryModel::Interface<dim> *>(&this->get_geometry_model()));
-										
+
+      // GeometryModel::Box<dim> *gm = dynamic_cast<GeometryModel::Box<dim> *>
+      // (const_cast<GeometryModel::Interface<dim> *>(&this->get_geometry_model()));
+
       // loop over all of the surface cells and save the elevation to stored_value
       typename parallel::distributed::Triangulation<dim>::active_cell_iterator cell = this->get_triangulation().begin_active(),
                                                                                endc = this->get_triangulation().end();
-																			   
+
       for (; cell != endc; ++cell)
         if (cell->is_locally_owned() && cell->at_boundary())
           for (unsigned int face_no = 0; face_no < GeometryInfo<dim>::faces_per_cell; ++face_no)
@@ -77,7 +77,7 @@ namespace aspect
                   {
                     Point<dim> vertex = face_vals.quadrature_point(corner);
                     double elevation = this->get_geometry_model().height_above_original_surface(vertex);
-					stored_values.push_back (std::make_pair(vertex, elevation));
+                    stored_values.push_back (std::make_pair(vertex, elevation));
                   }
               }
 
@@ -158,7 +158,12 @@ namespace aspect
   namespace Postprocess
   {
     ASPECT_REGISTER_POSTPROCESSOR(TopographyToFile,
-                                  "topography to file", 
-								  "topography to file")
+                                  "topography to file",
+                                  "A postprocessor that outputs topography into text "
+                                  "files named `topography.NNNNN' in the output directory, "
+                                  "where NNNNN is the number of the time step."
+                                  "\n\n"
+                                  "The file format then consists of lines with Euclidean coordinates "
+                                  "followed by the corresponding topography value.")
   }
 }

@@ -410,13 +410,13 @@ namespace aspect
     {
       return std::min (std::max (point2[0]-position.norm(), 0.), maximal_depth());
     }
-	
+
     template <int dim>
     double
     Chunk<dim>::height_above_original_surface(const Point<dim> &position) const
     {
       return std::min (std::max (point2[0]-position.norm(), -maximal_depth()), maximal_depth());
-    }	
+    }
 
 
     template <int dim>
