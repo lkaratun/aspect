@@ -67,7 +67,6 @@ namespace aspect
          * @}
          */
 
-
       private:
         /**
          * Whether or not to produce text files with topography values
@@ -78,9 +77,6 @@ namespace aspect
         * Whether or not to output topography statistics to screen and statistics file
         */
         bool write_statistics;
-
-
-
 
         /**
          * Interval between the generation of text output. This parameter
@@ -94,7 +90,6 @@ namespace aspect
          * to be produced. Used to check for the next necessary output time.
          */
         double last_output_time;
-
     };
   }
 }

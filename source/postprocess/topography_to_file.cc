@@ -53,14 +53,14 @@ namespace aspect
       // have a stream into which we write the data. the text stream is then
       // later sent to processor 0
       std::ostringstream output_stats;
-      std::ostringstream output_file;
+	  std::ostringstream output_file;
       std::vector<std::pair<Point<dim>,double> > stored_values;
 
 
       // Choose stupidly large values for initialization
       double local_max_height = -std::numeric_limits<double>::max();
       double local_min_height = std::numeric_limits<double>::max();
-
+	  
       // loop over all of the surface cells and save the elevation to stored_value
       typename parallel::distributed::Triangulation<dim>::active_cell_iterator cell = this->get_triangulation().begin_active(),
                                                                                endc = this->get_triangulation().end();
@@ -83,42 +83,40 @@ namespace aspect
                     if ( elevation > local_max_height)
                       local_max_height = elevation;
                     if ( elevation < local_min_height)
-                      local_min_height = elevation;
+                      local_min_height = elevation;					
                   }
               }
-
+			  
       //Calculate min/max topography across all processes
-      const double max_topography = Utilities::MPI::max(local_max_height, this->get_mpi_communicator());
-      const double min_topography = Utilities::MPI::min(local_min_height, this->get_mpi_communicator());
+	  const double max_topography = Utilities::MPI::max(local_max_height, this->get_mpi_communicator());
+      const double min_topography = Utilities::MPI::min(local_min_height, this->get_mpi_communicator());			  
 
-      //Write results to statistics file
+	  //Write results to statistics file
       statistics.add_value ("Minimum topography (m)",
                             min_topography);
       statistics.add_value ("Maximum topography (m)",
                             max_topography);
-      //{
-      const char *columns[] = { "Minimum topography (m)",
-                                "Maximum topography (m)"
-                              };
-      for (unsigned int i=0; i<sizeof(columns)/sizeof(columns[0]); ++i)
-        {
-          statistics.set_precision (columns[i], 8);
-          statistics.set_scientific (columns[i], true);
-        }
-      //}
-
+		const char *columns[] = { "Minimum topography (m)",
+								  "Maximum topography (m)"
+								};
+		for (unsigned int i=0; i<sizeof(columns)/sizeof(columns[0]); ++i)
+		  {
+			statistics.set_precision (columns[i], 8);
+			statistics.set_scientific (columns[i], true);
+		  }
+      
       output_stats.precision(4);
       output_stats << min_topography << " m, "
-                   << max_topography << " m";
-
-
-
-
+             << max_topography << " m";	  
+			 
+			 
+			 
+	  
       // Write the solution to file
-
-      // if this is the first time we get here, set the last output time
-      // to the current time - output_interval. this makes sure we
-      // always produce data during the first time step
+	      
+		  // if this is the first time we get here, set the last output time
+		  // to the current time - output_interval. this makes sure we
+		  // always produce data during the first time step
       if (std::isnan(last_output_time))
         {
           last_output_time = this->get_time() - output_interval;
@@ -128,17 +126,17 @@ namespace aspect
       if ((this->get_time() < last_output_time + output_interval)
           && (this->get_timestep_number() != 0))
         return std::pair<std::string,std::string>();
-
-
-
-
-
+		
+		
+		
+		
+	  
       for (unsigned int i=0; i<stored_values.size(); ++i)
         {
           output_file << stored_values[i].first
-                      << ' '
-                      << stored_values[i].second
-                      << std::endl;
+                 << ' '
+                 << stored_values[i].second
+                 << std::endl;
         }
 
 
@@ -195,8 +193,8 @@ namespace aspect
           MPI_Send (&output_file.str()[0], output_file.str().size()+1, MPI_CHAR, 0, mpi_tag,
                     this->get_mpi_communicator());
         }
-
-      // if output_interval is positive, then update the last supposed output
+		
+	// if output_interval is positive, then update the last supposed output
       // time
       if (output_interval > 0)
         {
@@ -213,7 +211,7 @@ namespace aspect
       return std::pair<std::string, std::string> ("Topography min/max:",
                                                   output_stats.str());
     }
-
+	
     template <int dim>
     void
     TopographyToFile<dim>::declare_parameters (ParameterHandler &prm)
@@ -225,12 +223,12 @@ namespace aspect
           prm.declare_entry ("Output to file", "false",
                              Patterns::List(Patterns::Bool()),
                              "Whether or not to write topography to a text file named named"
-                             "'topography.NNNNN' in the output directory");
+							 "'topography.NNNNN' in the output directory");
 
           prm.declare_entry ("Output statistics", "true",
                              Patterns::List(Patterns::Bool()),
                              "Whether or not to output topography statistics to screen and "
-                             "statistics file in the output directory");
+							 "statistics file in the output directory");	
           prm.declare_entry ("Time between text output", "0.",
                              Patterns::Double (0),
                              "The time interval between each generation of "
@@ -238,7 +236,7 @@ namespace aspect
                              "that output should be generated in each time step. "
                              "Units: years if the "
                              "'Use years in output instead of seconds' parameter is set; "
-                             "seconds otherwise.");
+                             "seconds otherwise.");							 
         }
         prm.leave_subsection();
       }
@@ -255,20 +253,20 @@ namespace aspect
       {
         prm.enter_subsection("Topography");
         {
-          write_to_file        = prm.get_bool ("Output to file");
-          write_statistics       = prm.get_bool ("Output statistics");
+          write_to_file				 = prm.get_bool ("Output to file");
+          write_statistics			 = prm.get_bool ("Output statistics");
           output_interval = prm.get_double ("Time between text output");
           if (this->convert_output_to_years())
-            output_interval *= year_in_seconds;
+            output_interval *= year_in_seconds;		  
         }
         prm.leave_subsection();
       }
       prm.leave_subsection();
     }
-
-
-
-
+	
+	
+	
+	
   }
 }
 

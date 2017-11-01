@@ -225,7 +225,7 @@ namespace aspect
     Box<dim>::height_above_original_surface(const Point<dim> &position) const
     {
       const double d = (position(dim-1)-box_origin[dim-1]) - extents[dim-1] ;
-      return std::min (std::max (d, -maximal_depth()), maximal_depth());
+      return std::max (d, -extents[dim-1]);
     }
 
 

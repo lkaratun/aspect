@@ -269,7 +269,7 @@ namespace aspect
     double
     SphericalShell<dim>::height_above_original_surface(const Point<dim> &position) const
     {
-      return std::min(std::max(position.norm()-outer_radius(),-maximal_depth()), maximal_depth());
+      return std::max(position.norm()-outer_radius(),inner_radius()-outer_radius());
     }
 
 
