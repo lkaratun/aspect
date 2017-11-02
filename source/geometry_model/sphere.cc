@@ -89,9 +89,9 @@ namespace aspect
 
     template <int dim>
     double
-    Sphere<dim>::height_above_original_surface(const Point<dim> &position) const
+    Sphere<dim>::height_above_reference_surface(const Point<dim> &position) const
     {
-      return std::max(position.norm()-radius(),-radius());
+      return position.norm()-radius();
     }
 
 

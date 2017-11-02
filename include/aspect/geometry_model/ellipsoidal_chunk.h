@@ -177,9 +177,13 @@ namespace aspect
         double
         depth(const Point<dim> &position) const;
 
+        /**
+         * Placeholder for a function returning the height of the given
+         * position relative to the reference model surface.
+         */
         virtual
         double
-        height_above_original_surface(const Point<dim> &position) const;
+        height_above_reference_surface(const Point<dim> &position) const;
 
         /**
          * Returns a point in the center of the domain.

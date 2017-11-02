@@ -413,9 +413,9 @@ namespace aspect
 
     template <int dim>
     double
-    Chunk<dim>::height_above_original_surface(const Point<dim> &position) const
+    Chunk<dim>::height_above_reference_surface(const Point<dim> &position) const
     {
-      return std::max (position.norm()-point2[0], point1[0]-point2[0]);
+      return position.norm()-point2[0];
     }
 
 

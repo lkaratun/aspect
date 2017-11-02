@@ -600,11 +600,12 @@ namespace aspect
 
     template <int dim>
     double
-    EllipsoidalChunk<dim>::height_above_original_surface(const Point<dim> &position) const
+    EllipsoidalChunk<dim>::height_above_reference_surface(const Point<dim> &position) const
     {
-      AssertThrow(false, ExcMessage("The topography postprocessor does not recognize the geometry model. "
+      AssertThrow(false, ExcMessage("Function height_above_reference_surface is not yet implemented"
+                                    "for the ellipsoidal chunk geometry model."
                                     "Consider using a box, spherical shell, sphere, or chunk.") );
-      return 1;
+      return -999;
     }
 
 

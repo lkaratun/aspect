@@ -267,9 +267,9 @@ namespace aspect
 
     template <int dim>
     double
-    SphericalShell<dim>::height_above_original_surface(const Point<dim> &position) const
+    SphericalShell<dim>::height_above_reference_surface(const Point<dim> &position) const
     {
-      return std::max(position.norm()-outer_radius(),inner_radius()-outer_radius());
+      return position.norm()-outer_radius();
     }
 
 
