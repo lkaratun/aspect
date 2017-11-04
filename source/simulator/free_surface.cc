@@ -306,9 +306,9 @@ namespace aspect
     //Make the constraints for the elliptic problem.  On the free surface, we
     //constrain mesh velocity to be v.n, on free slip it is constrainted to
     //be tangential, and on no slip boundaries it is zero.
-    std::cout<<"Entered execute()\n";
+    // std::cout<<"Entered execute()\n";
 		make_constraints();
-		std::cout<<"make_constraints complete\n";
+		// std::cout<<"make_constraints complete\n";
 
 
     // Assemble and solve the vector Laplace problem which determines
@@ -448,8 +448,8 @@ namespace aspect
     boundary_velocity.reinit(mesh_locally_owned, mesh_locally_relevant, sim.mpi_communicator);
     
 		//Apply hillslope diffusion
-		diffuse_surface(boundary_velocity);
-		//project_velocity_onto_boundary( boundary_velocity );
+		//diffuse_surface(boundary_velocity);
+		project_velocity_onto_boundary( boundary_velocity );
 
     // now insert the relevant part of the solution into the mesh constraints
     IndexSet constrained_dofs;
@@ -509,10 +509,10 @@ namespace aspect
 		
 		
 		
-		std::cout<<"entered diffuse_surface\n";
+		// std::cout<<"entered diffuse_surface\n";
 		const unsigned int ts = sim.timestep_number;
 		
-		std::cout <<"Time = " <<sim.time <<std::endl;
+		// std::cout <<"Time = " <<sim.time <<std::endl;
 		LinearAlgebra::SparseMatrix system_matrix;
 		LinearAlgebra::Vector system_rhs, solution;
     system_rhs.reinit(mesh_locally_owned, sim.mpi_communicator);
@@ -540,7 +540,7 @@ namespace aspect
                                                 ZeroFunction<dim>(dim), constraints);																									
 		
 		
-	std::cout<<"completed periodic boundaries loop\n";
+	// std::cout<<"completed periodic boundaries loop\n";
     constraints.close();
 		
 #ifdef ASPECT_USE_PETSC
@@ -566,7 +566,7 @@ namespace aspect
 #endif
 	
 
-	std::cout<<"completed sparsity patterns setup\n";
+	// std::cout<<"completed sparsity patterns setup\n";
 	
 		
 		
@@ -586,7 +586,7 @@ namespace aspect
 		LinearAlgebra::Vector displacements = this->mesh_displacements;//free_surface_dof_handler.mesh_displacements;
 
 		
-		std::cout<<"completed FEValues setup\n";
+		// std::cout<<"completed FEValues setup\n";
 		
 		double theta = 1;
 		
@@ -647,16 +647,16 @@ namespace aspect
 		const unsigned int dofs_per_face = free_surface_fe.dofs_per_face;
 		
 		//const unsigned int dofs_per_cell = free_surface_fe.dofs_per_cell;
-		std::cout<<"dofs_per_cell="<<dofs_per_cell<<std::endl;
-		std::cout<<"dofs_per_cell_reg="<<dofs_per_cell_reg<<std::endl;
-		std::cout<<"dofs_per_face="<<dofs_per_face<<std::endl;
+		// std::cout<<"dofs_per_cell="<<dofs_per_cell<<std::endl;
+		// std::cout<<"dofs_per_cell_reg="<<dofs_per_cell_reg<<std::endl;
+		// std::cout<<"dofs_per_face="<<dofs_per_face<<std::endl;
 		
 		const unsigned int n_q_points = fs_fe_values.n_quadrature_points;
 		const unsigned int n_q_points_reg = fe_values.n_quadrature_points;
 		const unsigned int n_face_q_points = fs_fe_face_values.n_quadrature_points;
-		std::cout<<"n_q_points = "<<n_q_points<<std::endl;
-		std::cout<<"n_q_points_reg = "<<n_q_points_reg<<std::endl;
-		std::cout<<"n_face_q_points = "<<n_face_q_points<<std::endl;
+		// std::cout<<"n_q_points = "<<n_q_points<<std::endl;
+		// std::cout<<"n_q_points_reg = "<<n_q_points_reg<<std::endl;
+		// std::cout<<"n_face_q_points = "<<n_face_q_points<<std::endl;
 		//Create local matrices
 		FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
 		// FullMatrix<double>   cell_mass (dofs_per_cell, dofs_per_cell);
@@ -742,7 +742,7 @@ namespace aspect
 							disp.push_back(displacement);
 							
 							//if (sim.timestep_number==0) std::cout<<fs_fe_face_values.JxW (q_index)<<" ";
-							if (sim.timestep_number==0) std::cout<<fs_fe_face_values.JxW (q_index)<<" ";
+							// if (sim.timestep_number==0) std::cout<<fs_fe_face_values.JxW (q_index)<<" ";
 							
 							
 							
@@ -968,7 +968,7 @@ namespace aspect
 		solver.solve (system_matrix, solution, system_rhs,
 									PreconditionIdentity());
 									
-		std::cout<<"Diffusion equation solved in "<<solver_control.last_step() << " iterations."<< std::endl;							
+		//std::cout<<"Diffusion equation solved in "<<solver_control.last_step() << " iterations."<< std::endl;							
 		
 		// Do I need this?? ************
 		//constraints.distribute (solution);
@@ -1032,7 +1032,7 @@ namespace aspect
 			std::vector<double> ua_diff(u[ts].size(), 0);
 			ua.push_back(displacements_vector());
 			
-			std::cout<<"u[0]size="<<u[0].size()<<" ";
+			// std::cout<<"u[0]size="<<u[0].size()<<" ";
 			
 			double eps = 1e-10;
 			
@@ -1108,7 +1108,7 @@ namespace aspect
 						counter=0;
 					if (counter>3)
 					{
-						std::cout << "n reached= "<<n<<" ";
+						// std::cout << "n reached= "<<n<<" ";
 						break;
 					}
 				}
@@ -1381,11 +1381,11 @@ namespace aspect
     mass_matrix_constraints.distribute (dist_solution);
     output = dist_solution;
 	
-	std::ofstream file_sol("stokes_sol", std::ios::app);
-	for (int i =0; i<output.size();i++)
-		file_sol << output[i]<<" ";
-	file_sol << std::endl;
-	file_sol.close();	
+	// std::ofstream file_sol("stokes_sol", std::ios::app);
+	// for (int i =0; i<output.size();i++)
+		// file_sol << output[i]<<" ";
+	// file_sol << std::endl;
+	// file_sol.close();	
 	
 	
 	
@@ -1660,7 +1660,14 @@ namespace aspect
 						//linear topography
 						//displacement[dim-1] = p[dim-1]*amp*p[0]; 
 						//quadratic topography
-						displacement[dim-1] = p[dim-1]*amp*(4*p[0]-4*p[0]*p[0]); 
+						//displacement[dim-1] = p[dim-1]*amp*(4*p[0]-4*p[0]*p[0]); 
+						
+						//Hammocky topography
+						if (dim==3)
+							displacement[dim-1] = amp+amp*p[2]*std::sin(p[0])*std::sin(p[1]); 
+						else
+							displacement[dim-1] = amp*p[1]*std::sin(p[0]); 
+							
 						unsigned int support_point_index;
 						for (unsigned int dir=0; dir<dim; ++dir)
 							{
