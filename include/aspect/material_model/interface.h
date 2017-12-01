@@ -454,6 +454,11 @@ namespace aspect
        */
       template <class AdditionalOutputType>
       const AdditionalOutputType *get_additional_output() const;
+
+      /**
+       * Check if all outputs were filled correctly.
+       **/
+      void validate() const;
     };
 
 
