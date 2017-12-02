@@ -448,8 +448,8 @@ namespace aspect
     boundary_velocity.reinit(mesh_locally_owned, mesh_locally_relevant, sim.mpi_communicator);
     
 		//Apply hillslope diffusion
-		//diffuse_surface(boundary_velocity);
-		project_velocity_onto_boundary( boundary_velocity );
+		diffuse_surface(boundary_velocity);
+		//project_velocity_onto_boundary( boundary_velocity );
 
     // now insert the relevant part of the solution into the mesh constraints
     IndexSet constrained_dofs;
@@ -534,10 +534,10 @@ namespace aspect
                                              // (*p).first.first, (*p).first.second, (*p).second, mass_matrix_constraints);
     
 		// //Zero out the displacement for the zero-velocity boundary indicators
-    VectorTools::interpolate_boundary_values (free_surface_dof_handler, 0,
-                                                ZeroFunction<dim>(dim), constraints);		
-    VectorTools::interpolate_boundary_values (free_surface_dof_handler, 1,
-                                                ZeroFunction<dim>(dim), constraints);																									
+    // VectorTools::interpolate_boundary_values (free_surface_dof_handler, 0,
+                                                // ZeroFunction<dim>(dim), constraints);		
+    // VectorTools::interpolate_boundary_values (free_surface_dof_handler, 1,
+                                                // ZeroFunction<dim>(dim), constraints);																									
 		
 		
 	// std::cout<<"completed periodic boundaries loop\n";
