@@ -1655,6 +1655,9 @@ namespace aspect
 						//displacement[dim-1] = p[dim-1]*0.1*std::sin(p[0]*M_PI);
 						double L=1; double amp=0.1;
 						
+						//Zero topography
+						displacement[dim-1] = 0;
+						
 						//^-shaped topography
 						//displacement[dim-1] = -p[dim-1]*2*amp*(std::abs(L/2-p[0]))+amp;
 						//constant topography
@@ -1665,10 +1668,10 @@ namespace aspect
 						//displacement[dim-1] = p[dim-1]*amp*(4*p[0]-4*p[0]*p[0]); 
 						
 						//Hammocky topography
-						if (dim==3)
-							displacement[dim-1] = amp+amp*p[2]*std::sin(p[0])*std::sin(p[1]); 
-						else
-							displacement[dim-1] = amp*p[1]*std::sin(p[0]); 
+						// if (dim==3)
+							// displacement[dim-1] = amp+amp*p[2]*std::sin(p[0])*std::sin(p[1]); 
+						// else
+							// displacement[dim-1] = amp*p[1]*std::sin(p[0]); 
 							
 						unsigned int support_point_index;
 						for (unsigned int dir=0; dir<dim; ++dir)

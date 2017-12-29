@@ -892,7 +892,7 @@ namespace aspect
 
           // here we create a mask for interpolate_boundary_values out of the 'selector'
           std::vector<bool> mask(introspection.component_masks.velocities.size(), false);
-		  std::cout<<"Length of mask in core.cc = "<<mask.size()<<std::endl;
+		  //std::cout<<"Length of mask in core.cc = "<<mask.size()<<std::endl;
           const std::string &comp = parameters.prescribed_velocity_boundary_indicators[p->first].first;
 
           if (comp.length()>0)
