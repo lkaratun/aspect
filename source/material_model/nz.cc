@@ -245,7 +245,6 @@ namespace aspect
 
               if (!crash)
                 {
-                  //if (isnan(viscosity_dislocation_creep) || isnan(viscosity_MC))
 					if (boost::math::isnan(viscosity_dislocation_creep) || boost::math::isnan(viscosity_MC))
                     {
                       std::cout<<"viscosity_dislocation_creep or MC is NAN. Visc_disl_creep = "<<viscosity_dislocation_creep<<"  Visc_MC = "<<viscosity_MC<<" \n";
@@ -264,7 +263,11 @@ namespace aspect
 					}
                 }
 
-              total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
+              
+			  if (boost::math::isnan(viscosity_dislocation_creep) || boost::math::isnan(viscosity_MC))
+				  total_viscosity=eta_min;
+			  else
+				  total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
               viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
 
               // if (!crash)

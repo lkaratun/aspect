@@ -450,7 +450,7 @@ namespace aspect
 		//Project velocity from stokes solution onto boundary
 		project_velocity_onto_boundary( boundary_velocity );
 		//Apply hillslope diffusion
-		diffuse_surface(boundary_velocity);
+		if (diffusivity) diffuse_surface(boundary_velocity);
 		
 
     // now insert the relevant part of the solution into the mesh constraints
