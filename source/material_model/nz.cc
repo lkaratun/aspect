@@ -126,7 +126,7 @@ namespace aspect
         {
           const std::vector<double> composition = in.composition[i];
           const std::vector<double> volume_fractions = compute_volume_fractions(composition);
-					
+
 
           std::vector<double> viscosities(volume_fractions.size());
 
@@ -191,7 +191,7 @@ namespace aspect
                   strainrate_mod=pow(strainrate_mod,(nvs[j]-1)/nvs[j]);
 				  strainrate_mod*=ref_strain_rate;
                   strainrate_mod=1/strainrate_mod;
-				  
+
                   //if (j<3) //crust and weak zone
                   if (in.temperature[i])
                     //Gerya formula
@@ -214,7 +214,7 @@ namespace aspect
                     std::cout<<"strainrate_E2: "<<strainrate_E2<<"  ";
 					std::cout<<"nvs[j]: "<<nvs[j]<<"  ";
 					std::cout<<"strainrate_mod: "<<strainrate_mod<<"  ";
-					
+
                     // std::cout<<"std::tan(angle_if[1]*M_PI/180): "<<std::tan(angle_if[1]*M_PI/180)<<"  ";
                     //std::cout<<"sigma_y: "<<sigma_y<<"  ";
                     //std::cout<<"viscosity_MC: "<<viscosity_MC<<"  ";
@@ -258,12 +258,12 @@ namespace aspect
 						std::cout<<"pressure: "<<in.pressure[i]<<"  \n";
 						std::cout<<"prefactor: "<<pow(material_parameters[j],-1/nas[j]) * strainrate_mod<<"  ";
 						std::cout<<"exp: "<<exp((activation_energies[j]+activation_volumes[j]*std::max(in.pressure[i],0.0))/(nts[j]*R*in.temperature[i]))<<"  \n\n";
-						
-                      crash = true;											
+
+                      crash = true;
 					}
                 }
 
-              
+
 			  if (boost::math::isnan(viscosity_dislocation_creep) || boost::math::isnan(viscosity_MC))
 				  total_viscosity=eta_min;
 			  else
@@ -281,7 +281,7 @@ namespace aspect
                     // }
 
 
-                // }							
+                // }
 
             }
 
@@ -348,8 +348,8 @@ namespace aspect
 
 
           double thermal_expansivity = 0.0;
-		  for (unsigned int j=0; j < volume_fractions.size(); ++j)
-            thermal_expansivity += volume_fractions[j] * thermal_alpha[j];
+		  for (unsigned int j=0; j < volume_fractions.size(); ++j){
+            thermal_expansivity += volume_fractions[j] * thermal_alpha[j];}
           out.thermal_expansion_coefficients[i] = thermal_expansivity;
           out.specific_heat[i] = reference_specific_heat;
 		  if (t_conductivity)
@@ -359,6 +359,9 @@ namespace aspect
           out.compressibilities[i] = reference_compressibility;
           for (unsigned int c=0; c<in.composition[i].size(); ++c)
             out.reaction_terms[i][c] = 0.0;
+
+      out.entropy_derivative_pressure[i] = 0.0;
+      out.entropy_derivative_temperature[i] = 0.0;
         }
     }
 
@@ -375,7 +378,7 @@ namespace aspect
 			std::vector<double> viscosities_MC(volume_fractions.size());
 			std::vector<double> viscosities_dislocation_creep(volume_fractions.size());
 			const double R = 8.314;
-			
+
 			double strainrate_E2 = 0;
 			strainrate_E2 = strain_rate.norm();
 			strainrate_E2 = std::max(strainrate_E2,min_strain_rate);
@@ -386,7 +389,7 @@ namespace aspect
 				{
 
 					//***************Calculate crustal viscosity***************
-					//Drucker-Prager yield criterion 
+					//Drucker-Prager yield criterion
 					sigma_y = ( (dim==3)
 											?
 											( 6.0 * cohesion[j] * std::cos(angle_if[j]*M_PI/180) + 2.0 * std::max(pressure,0.0) * std::sin(angle_if[j]*M_PI/180) )
@@ -403,7 +406,7 @@ namespace aspect
 					}
 					else
 						viscosity_MC=eta_max;
-					
+
 
 					//Calculate dislocation creep
 					//Gerya formula
@@ -421,11 +424,11 @@ namespace aspect
 																						 exp((activation_energies[j]+activation_volumes[j]*std::max(pressure,0.0))/(nts[j]*R*temperature));
 						}
 					else viscosity_dislocation_creep=eta_max;
-					
-					
+
+
 					// total_viscosity = std::min(viscosity_dislocation_creep,viscosity_MC);
 					// viscosities[j] = std::max(std::min(total_viscosity,eta_max),eta_min);
-					
+
 					viscosities_MC[j]=std::max(std::min(viscosity_MC,eta_max),eta_min);
 					viscosities_dislocation_creep[j]=std::max(std::min(viscosity_dislocation_creep,eta_max),eta_min);
 				}
@@ -433,8 +436,8 @@ namespace aspect
 			//***************Calculate total viscosity***************
 			viscosity_MC = average_value(composition, viscosities_MC, viscosity_averaging);
 			//viscosity_MC = eta_max;
-			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);	
-			
+			viscosity_dislocation_creep = average_value(composition, viscosities_dislocation_creep, viscosity_averaging);
+
 			return viscosity_MC/viscosity_dislocation_creep; // High return value = viscous behaviour
     }
 
@@ -626,18 +629,18 @@ namespace aspect
                              Patterns::List(Patterns::Double(0)),
                              "List of temerature exponents, $n_t$, for background mantle and compositional fields,"
                              "for a total of N+1 values, where N is the number of compositional fields."
-                             "If only one values is given, then all use the same value.  Units: None");														 
+                             "If only one values is given, then all use the same value.  Units: None");
           prm.declare_entry ("Plastic exponents", "10",
                              Patterns::List(Patterns::Double(0)),
                              "List of plastic stress exponents, $n_p$, for background mantle and compositional fields,"
                              "for a total of N+1 values, where N is the number of compositional fields."
-                             "If only one values is given, then all use the same value.  Units: None");														 
+                             "If only one values is given, then all use the same value.  Units: None");
           prm.declare_entry ("Material exponents", "3.5",
                              Patterns::List(Patterns::Double(0)),
                              "List of material stress exponents, $n_p$, for background mantle and compositional fields,"
                              "for a total of N+1 values, where N is the number of compositional fields."
                              "If only one values is given, then all use the same value.  Units: None");
-							 
+
           prm.declare_entry ("Material parameters", "1e-20",
                              Patterns::List(Patterns::Double(0)),
                              "List of material parameter values. Units: Pa^-n*s^-1");
@@ -662,7 +665,7 @@ namespace aspect
           prm.declare_entry ("Reference compressibility", "4e-12",
                              Patterns::Double (0),
                              "The value of the reference compressibility. "
-                             "Units: $1/Pa$.");							 
+                             "Units: $1/Pa$.");
 
         }
         prm.leave_subsection();
@@ -681,7 +684,7 @@ namespace aspect
       {
         prm.enter_subsection("nz model");
         {
-          
+
           eta_min                    = prm.get_double ("Minimum viscosity");
           eta_max                    = prm.get_double ("Maximum viscosity");
           eta_reference              = prm.get_double ("Reference viscosity");
@@ -737,7 +740,7 @@ namespace aspect
             thermal_alpha.assign( n_fields , x_values[0]);
           else
             thermal_alpha = x_values;
-		
+
           // Parse stress exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Stress exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
@@ -754,8 +757,8 @@ namespace aspect
           if (x_values.size() == 1)
             nts.assign( n_fields , x_values[0]);
           else
-            nts = x_values;					
-					
+            nts = x_values;
+
 		  // Parse plastic exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Plastic exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
@@ -764,7 +767,7 @@ namespace aspect
             nps.assign( n_fields , x_values[0]);
           else
             nps = x_values;
-		
+
 		  // Parse material exponents
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material exponents")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
@@ -772,7 +775,7 @@ namespace aspect
           if (x_values.size() == 1)
             nas.assign( n_fields , x_values[0]);
           else
-            nas = x_values;		
+            nas = x_values;
 
           // Parse material parameters
           x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Material parameters")));
@@ -816,7 +819,7 @@ namespace aspect
             viscosity_averaging = maximum_composition;
           else
             AssertThrow(false, ExcMessage("Not a valid viscosity averaging scheme"));
-					
+
 					//Parse reference temperature
 					x_values = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Reference temperature")));
           AssertThrow(x_values.size() == 1u || (x_values.size() == n_fields),
@@ -825,7 +828,7 @@ namespace aspect
             reference_T.assign( n_fields , x_values[0]);
           else
             reference_T = x_values;
-					
+
         }
         prm.leave_subsection();
       }
