@@ -450,11 +450,11 @@ namespace aspect
 		//Project velocity from stokes solution onto boundary
 				project_velocity_onto_boundary( boundary_velocity );
 
-				std::ofstream file1("project_done", std::ios::app);
-				for (int i =0; i<boundary_velocity.size();i++)
-					file1 << boundary_velocity[i]<<" ";
-				file1 << std::endl;
-				file1.close();	
+				// std::ofstream file1("project_done", std::ios::app);
+				// for (int i =0; i<boundary_velocity.size();i++)
+				// 	file1 << boundary_velocity[i]<<" ";
+				// file1 << std::endl;
+				// file1.close();	
 
 
 		//Apply hillslope diffusion
@@ -464,11 +464,11 @@ namespace aspect
 					diffuse_surface(boundary_velocity);
 				}
 
-				std::ofstream file2("diffuse_done", std::ios::app);
-				for (int i =0; i<boundary_velocity.size();i++)
-					file2 << boundary_velocity[i]<<" ";
-				file2 << std::endl;
-				file2.close();	
+				// std::ofstream file2("diffuse_done", std::ios::app);
+				// for (int i =0; i<boundary_velocity.size();i++)
+				// 	file2 << boundary_velocity[i]<<" ";
+				// file2 << std::endl;
+				// file2.close();	
 
 
 		// now insert the relevant part of the solution into the mesh constraints
@@ -1012,17 +1012,17 @@ namespace aspect
 		// }
 
 
-			std::ofstream file_sol("sol", std::ios::app);
-			for (int i =0; i<solution.size();i++)
-				file_sol << solution[i]<<" ";
-			file_sol << std::endl;
-			file_sol.close();
+			// std::ofstream file_sol("sol", std::ios::app);
+			// for (int i =0; i<solution.size();i++)
+			// 	file_sol << solution[i]<<" ";
+			// file_sol << std::endl;
+			// file_sol.close();
 
-			std::ofstream file_disp("disp", std::ios::app);
-			for (int i =0; i<displacements.size();i++)
-				file_disp << displacements[i]<<" ";
-			file_disp << std::endl;
-			file_disp.close();
+			// std::ofstream file_disp("disp", std::ios::app);
+			// for (int i =0; i<displacements.size();i++)
+			// 	file_disp << displacements[i]<<" ";
+			// file_disp << std::endl;
+			// file_disp.close();
 
 		// std::ofstream file_system_rhs("system_rhs", std::ios::app);
 		// for (int i =0; i<system_rhs.size();i++)
@@ -1153,59 +1153,59 @@ namespace aspect
 		//}
 
 
-			std::ofstream myfile2("ua", std::ios::app);
-			std::ofstream myfile3("u_diff", std::ios::app);
-			std::ofstream myfile4("ua_diff", std::ios::app);
-			std::ofstream myfile5("u-ua", std::ios::app);
-		// std::ofstream myfile6("disp", std::ios::app);
-		// std::ofstream myfile6("disp", std::ios::app);
+		// 	std::ofstream myfile2("ua", std::ios::app);
+		// 	std::ofstream myfile3("u_diff", std::ios::app);
+		// 	std::ofstream myfile4("ua_diff", std::ios::app);
+		// 	std::ofstream myfile5("u-ua", std::ios::app);
+		// // std::ofstream myfile6("disp", std::ios::app);
+		// // std::ofstream myfile6("disp", std::ios::app);
 
 
-			for (unsigned int j=0; j<ua[ts].size(); ++j)
-			{
-				myfile2 << ua[ts][j].x<<" ";
-				myfile2 << ua[ts][j].y<<std::endl;
-				myfile5 << ua[ts][j].x<<" ";
-				myfile5 << u[ts][j].y-ua[ts][j].y<<std::endl;
+		// 	for (unsigned int j=0; j<ua[ts].size(); ++j)
+		// 	{
+		// 		myfile2 << ua[ts][j].x<<" ";
+		// 		myfile2 << ua[ts][j].y<<std::endl;
+		// 		myfile5 << ua[ts][j].x<<" ";
+		// 		myfile5 << u[ts][j].y-ua[ts][j].y<<std::endl;
 
-				if (ts)
-				{
-					if (j==15)
-					{
-						myfile3 << ts<<" ";
-						myfile3 << u[ts][j].y-u[ts-1][j].y<<std::endl;
-						myfile4 << ts<<" ";
-						myfile4 << ua[ts][j].y-ua[ts-1][j].y<<std::endl;
+		// 		if (ts)
+		// 		{
+		// 			if (j==15)
+		// 			{
+		// 				myfile3 << ts<<" ";
+		// 				myfile3 << u[ts][j].y-u[ts-1][j].y<<std::endl;
+		// 				myfile4 << ts<<" ";
+		// 				myfile4 << ua[ts][j].y-ua[ts-1][j].y<<std::endl;
 
-					}
-				}
+		// 			}
+		// 		}
 
-			}
-
-
-		// calculating norm of error against resolution
-
-			std::ofstream myfile6("u-ua_norm", std::ios::app);
-			if (sim.timestep_number==3)
-			{
-				for (unsigned int j=0; j<ua[ts].size(); ++j)
-					norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
-				norm = pow(norm, 0.5);
-				myfile6 << "Refinement "<<sim.parameters.initial_global_refinement<<"+"<<sim.parameters.initial_adaptive_refinement<<" ";
-				myfile6 << norm<<std::endl;
-			}
+		// 	}
 
 
-			myfile2 << std::endl;
-			myfile5 << std::endl;
-		// myfile3 << std::endl;
-		// myfile4 << std::endl;
-			myfile2.close();
-			myfile3.close();
-			myfile4.close();
-			myfile5.close();
-			myfile6.close();
-		//Compare obtained solution with analytical solution
+		// // calculating norm of error against resolution
+
+		// 	std::ofstream myfile6("u-ua_norm", std::ios::app);
+		// 	if (sim.timestep_number==3)
+		// 	{
+		// 		for (unsigned int j=0; j<ua[ts].size(); ++j)
+		// 			norm += pow(u[ts][j].y-ua[ts][j].y, 2)*u[ts][j].jxw;
+		// 		norm = pow(norm, 0.5);
+		// 		myfile6 << "Refinement "<<sim.parameters.initial_global_refinement<<"+"<<sim.parameters.initial_adaptive_refinement<<" ";
+		// 		myfile6 << norm<<std::endl;
+		// 	}
+
+
+		// 	myfile2 << std::endl;
+		// 	myfile5 << std::endl;
+		// // myfile3 << std::endl;
+		// // myfile4 << std::endl;
+		// 	myfile2.close();
+		// 	myfile3.close();
+		// 	myfile4.close();
+		// 	myfile5.close();
+		// 	myfile6.close();
+		// //Compare obtained solution with analytical solution
 
 
 
