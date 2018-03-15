@@ -402,12 +402,11 @@ template <int dim>
 			boundary_velocity.reinit(mesh_locally_owned, mesh_locally_relevant, sim.mpi_communicator);
 
 	//Project velocity from stokes solution onto boundary
-			project_velocity_onto_boundary( boundary_velocity );
+			//project_velocity_onto_boundary( boundary_velocity );
 
 	//Apply hillslope diffusion
 			if (diffusivity)
 			{
-				std::cout<< "\nDiffusivity = "<< diffusivity<<"\n";
 				diffuse_surface(boundary_velocity);
 			}
 
@@ -1319,10 +1318,10 @@ void FreeSurfaceHandler<dim>::setup_dofs() //called from core every mesh reparti
 					// displacement[dim-1] = p[dim-1]*amp*(4*p[0]-4*p[0]*p[0]);
 
 					//Hammocky topography
-					// if (dim==3)
-						// displacement[dim-1] = amp+amp*p[2]*std::sin(p[0])*std::sin(p[1]);
-					// else
-						// displacement[dim-1] = amp*p[1]*std::sin(p[0]);
+					if (dim==3)
+						displacement[dim-1] = amp+amp*p[2]*std::sin(p[0])*std::sin(p[1]);
+					else
+						displacement[dim-1] = amp*p[1]*std::sin(p[0]);
 
 					unsigned int support_point_index;
 					for (unsigned int dir=0; dir<dim; ++dir)
