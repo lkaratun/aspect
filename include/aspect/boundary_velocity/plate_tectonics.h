@@ -77,6 +77,7 @@ namespace aspect
         double alfa;
 		double influx_assymetry;
 		double outflux_assymetry;
+    std::string transition_type;
 
 
 
