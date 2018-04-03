@@ -78,6 +78,9 @@ namespace aspect
 		double influx_assymetry;
 		double outflux_assymetry;
     std::string transition_type;
+    std::string conservation;
+    std::vector<double> densities;
+    std::vector<double> thicknesses;
 
 
 
