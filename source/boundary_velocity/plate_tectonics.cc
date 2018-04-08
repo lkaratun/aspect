@@ -79,16 +79,47 @@ namespace aspect
      else if (x2>0) vel_x_out = x2;
      else std::cout<<std::endl<<"BOTH ROOTS FOR VELOCITY OUTFLOW EQUATION ARE 0 OR NEGATIVE"<<std::endl;
 
+     // temporary, only works with outflux height = influx height
+     vel_x_out = vel_x_in * outflux_mass_correction;
 
-     double transition_point = transition_zone * (vel_x_in/vel_x_out)/2;
-     double transition_zone_mantle=abs(transition_zone*vel_x_out/vel_x_in);
+
+     // double transition_point = transition_zone * (vel_x_in/vel_x_out)/2;
+     // double transition_zone_mantle=abs(transition_zone*vel_x_out/vel_x_in);
 
      double vel_x_in_left = vel_x_in * 2*(1-influx_assymetry);
      double vel_x_in_right = vel_x_in * 2*influx_assymetry;
-     double vel_x_out_left = vel_x_out * 2*(1-outflux_assymetry) * outflux_mass_correction;
-     double vel_x_out_right = vel_x_out * 2*outflux_assymetry * outflux_mass_correction;
+     double vel_x_out_left = vel_x_out * 2*(1-outflux_assymetry);
+     double vel_x_out_right = vel_x_out * 2*outflux_assymetry;
 
 
+
+    // //Proper b.c. rewritten
+    //   //const double alfa = 45*M_PI/180; //Alpine fault angle
+
+    //   //In- and out-flux for side faces
+    // if (x<width/2-wz_width/2)//left side
+    // {
+    //   if (z > total_thickness-lithospheric_thickness)
+    //    velocity[0]=vel_x_in_left;
+    //  else if (z>total_thickness-lithospheric_thickness-transition_zone)
+    //  {
+    //    velocity[0]=(vel_x_in_left+vel_x_out_left)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_left;
+    //  }
+    //  else
+    //    velocity[0]=-vel_x_out_left;
+    // }
+
+    //   else if (x>width/2+wz_width/2) //right side
+    //   {
+    //     if (z > total_thickness-lithospheric_thickness)
+    //      velocity[0]=-vel_x_in_right;
+    //    else if (z>total_thickness-lithospheric_thickness-transition_zone)
+    //    {
+    //      velocity[0]=-((vel_x_in_right+vel_x_out_right)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_right);
+    //    }
+    //    else
+    //      velocity[0]=vel_x_out_right;
+    //  }
 
     //Proper b.c. rewritten
       //const double alfa = 45*M_PI/180; //Alpine fault angle
@@ -96,24 +127,20 @@ namespace aspect
       //In- and out-flux for side faces
     if (x<width/2-wz_width/2)//left side
     {
-      if (z > total_thickness-lithospheric_thickness)
+      if (z > total_thickness/2 + transition_zone/2)
        velocity[0]=vel_x_in_left;
-     else if (z>total_thickness-lithospheric_thickness-transition_zone)
-     {
-       velocity[0]=(vel_x_in_left+vel_x_out_left)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_left;
-     }
+     else if (abs(z - total_thickness/2) <= transition_zone/2)
+       velocity[0]=(vel_x_in_left+vel_x_out_left)*(1-(total_thickness/2 + transition_zone/2 - z)/transition_zone) - vel_x_out_left;
      else
        velocity[0]=-vel_x_out_left;
-    }
+   }
 
       else if (x>width/2+wz_width/2) //right side
       {
-        if (z > total_thickness-lithospheric_thickness)
+        if (z > total_thickness/2 + transition_zone/2)
          velocity[0]=-vel_x_in_right;
-       else if (z>total_thickness-lithospheric_thickness-transition_zone)
-       {
-         velocity[0]=-((vel_x_in_right+vel_x_out_right)*(1-(total_thickness-lithospheric_thickness-z)/transition_zone) - vel_x_out_right);
-       }
+       else if (abs(z - total_thickness/2) <= transition_zone/2)
+         velocity[0]=-((vel_x_in_right+vel_x_out_right)*(1-(total_thickness/2 + transition_zone/2 - z)/transition_zone) - vel_x_out_right);
        else
          velocity[0]=vel_x_out_right;
      }
@@ -368,6 +395,14 @@ namespace aspect
         // velocity[2]=0;
         // //if (z==0) velocity[2] = -vel_x_in*2*depth/width*    (-abs(x-width/2)+width/2)/(width/2);
       // }
+
+
+  // std::ofstream myfile("vel", std::ios::app);
+  // //Debugging output to file
+  // if (x < 10e3)
+  //    myfile << z <<" "<<velocity[0]<<std::endl;
+  //  myfile.close();
+
 
 
 
