@@ -19,8 +19,8 @@
 */
 
 
-#ifndef _aspect_boundary_composition_two_merged_boxes_h
-#define _aspect_boundary_composition_two_merged_boxes_h
+#ifndef _aspect_boundary_composition_continental_collision_h
+#define _aspect_boundary_composition_continental_collision_h
 
 #include <aspect/boundary_composition/interface.h>
 #include <aspect/simulator_access.h>
@@ -38,7 +38,7 @@ namespace aspect
      * @ingroup BoundaryCompositions
      */
     template <int dim>
-    class TwoMergedBoxes : public Interface<dim>, public SimulatorAccess<dim>
+    class ContinentalCollision : public Interface<dim>, public SimulatorAccess<dim>
     {
       public:
         /**
@@ -47,8 +47,7 @@ namespace aspect
          * @copydoc aspect::BoundaryComposition::Interface::boundary_composition()
          */
         virtual
-        double boundary_composition (const types::boundary_id boundary_indicator,
-                                     const Point<dim> &position,
+        double boundary_composition (const Point<dim> &position,
                                      const unsigned int compositional_field) const;
 
         /**
