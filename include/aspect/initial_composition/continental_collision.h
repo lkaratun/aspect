@@ -19,16 +19,16 @@
 */
 
 
-#ifndef _aspect_boundary_composition_continental_collision_h
-#define _aspect_boundary_composition_continental_collision_h
+#ifndef _aspect_initial_composition_continental_collision_h
+#define _aspect_initial_composition_continental_collision_h
 
-#include <aspect/boundary_composition/interface.h>
+#include <aspect/initial_composition/interface.h>
 #include <aspect/simulator_access.h>
 
 
 namespace aspect
 {
-  namespace BoundaryComposition
+  namespace InitialComposition
   {
     /**
      * A class that implements a composition boundary condition for a
@@ -44,10 +44,10 @@ namespace aspect
         /**
          * This function returns constant compositions at the boundaries.
          *
-         * @copydoc aspect::BoundaryComposition::Interface::boundary_composition()
+         * @copydoc aspect::BoundaryComposition::Interface::initial_composition()
          */
         virtual
-        double boundary_composition (const Point<dim> &position,
+        double initial_composition (const Point<dim> &position,
                                      const unsigned int compositional_field) const;
 
         /**
