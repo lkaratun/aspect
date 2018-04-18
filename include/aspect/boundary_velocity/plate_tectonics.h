@@ -46,7 +46,7 @@ namespace aspect
         /**
          * Constructor.
          */
-        //plate_tectonics ();
+        // plate_tectonics ();
 
         /**
          * Return the boundary velocity as a function of position. For the
@@ -55,7 +55,7 @@ namespace aspect
          */
         virtual
         Tensor<1,dim>
-        boundary_velocity (const Point<dim> &position) const;
+        boundary_velocity (const types::boundary_id , const Point<dim> &position) const;
         static
         void
         declare_parameters (ParameterHandler &prm);

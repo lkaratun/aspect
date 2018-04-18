@@ -110,7 +110,7 @@ namespace aspect
     void
     ContinentalCollision<dim>::declare_parameters (ParameterHandler &prm)
     {
-      prm.enter_subsection("Boundary composition model");
+      prm.enter_subsection("Initial composition model");
       {
         prm.enter_subsection("Continental collision");
         {
@@ -162,9 +162,9 @@ namespace aspect
     void
     ContinentalCollision<dim>::parse_parameters (ParameterHandler &prm)
     {
-      prm.enter_subsection("Boundary composition model");
+      prm.enter_subsection("Initial composition model");
       {
-        prm.enter_subsection("Box with lithosphere boundary indicators");
+        prm.enter_subsection("Continental collision");
         {
           total_width = Utilities::string_to_double(prm.get ("X extent"));
           total_length = Utilities::string_to_double(prm.get ("Y extent"));

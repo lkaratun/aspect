@@ -13,7 +13,7 @@ namespace aspect
     template <int dim>
   Tensor<1,dim>
   plate_tectonics<dim>::
-  boundary_velocity (const Point<dim> &p) const
+  boundary_velocity (const types::boundary_id , const Point<dim> &p) const
   {
     Tensor<1,dim> velocity;
     for (int i = 0; i<dim; ++i)
@@ -543,7 +543,7 @@ namespace aspect
   namespace BoundaryVelocity
   {
     ASPECT_REGISTER_BOUNDARY_VELOCITY_MODEL(plate_tectonics,
-     "plate tectonics",
+     "Plate tectonics",
      "My b.c.")
   }
 }
