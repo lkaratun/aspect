@@ -76,7 +76,25 @@ namespace aspect
          * The values of the various composition variables on each of the
          * 2*dim+2*(dim-1) boundaries of the box.
          */
-        std::vector<double> composition_values[2*dim+2*(dim-1)];
+        // std::vector<double> composition_values[2*dim+2*(dim-1)];
+        //Z direction
+        double total_depth;
+        //X direction
+        double total_width;
+        //Y direction
+        double total_length;
+        double lithospheric_depth;
+        double oceanic_depth;
+        double continental_depth;
+        //y-direction
+        double continental_length;
+        //x-direction
+        double continental_width;
+
+        double wz_width;
+        double wz_height;
+        double wz_depth;
+        double wz_angle;
     };
   }
 }

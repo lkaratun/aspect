@@ -36,18 +36,6 @@ namespace aspect
     initial_composition (const Point<dim> &p/*position*/,
                           const unsigned int compositional_field) const
     {
-    // #set Function constants  = total_depth=512e3, total_width=1024e3, total_length = 1024e3, crustal_depth=20e3, lower_crustal_depth=30e3, lithospheric_depth=120e3, wz_width=20.e3, wz_height=120.e3, wz_depth=60e3, wz_angle =  60, pi=3.14159265359 #30*3.141592654/180 # angle from vertical
-    // set Function constants  = total_depth=512e3, total_width=512e3, total_length = 512e3, oceanic_depth=15e3, continental_depth=30e3, continental_length = 300e3, oceanic_width = 112e3, continental_width = 300e3, lithospheric_depth=120e3, wz_width=20.e3, wz_height=40.e3, wz_depth=60e3
-    // #Width : x, Depth: z, length: y
-
-
-
-    // #Variable angle weak zone
-    // #set Function expression = if (z > total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z)/tan(pi/2-wz_angle*pi/180*(total_length/2-y)/(total_length/2)))>wz_width/2)), 1, 0);
-    // if (z > total_depth-lower_crustal_depth && z <= total_depth-crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z)/tan(pi/2-wz_angle*pi/180*(total_length/2-y)/(total_length/2)))>wz_width/2)), 1, 0);
-    // if (z >= total_depth-wz_depth-wz_height/2 && z <= total_depth-wz_depth+wz_height/2 && (abs(x-total_width/2-(total_depth-wz_depth-z)/tan(pi/2-wz_angle*pi/180*(total_length/2-y)/(total_length/2)))<=wz_width/2), 1, 0);
-    // if (z > total_depth-lithospheric_depth && z <= total_depth-lower_crustal_depth && (z < total_depth-wz_depth-wz_height/2 || z > total_depth-wz_depth+wz_height/2 || (abs(x-total_width/2-(total_depth-wz_depth-z)/tan(pi/2-wz_angle*pi/180*(total_length/2-y)/(total_length/2)))>wz_width/2)), 1, 0);    if (z <= total_depth-lithospheric_depth, 1, 0)
-
       if (compositional_field<0 || compositional_field>4) std::cout << "compositional_field = " << compositional_field;
 
       const double x=p(0);
@@ -59,21 +47,24 @@ namespace aspect
       //Each following c.f. cuts through the previous ones
       unsigned int resulting_cf = 4;
 
-      double total_depth = 512e3;
-      double total_width = 512e3;
-      double total_length = 512e3;
-      double lithospheric_depth = 120e3;
-      double oceanic_depth = 15e3;
-      double continental_depth = 30e3;
-      //y-direction
-      double continental_length = 256e3;
-      //x-direction
-      double continental_width = 256e3;
+      // //Z direction
+      // double total_depth = 512e3;
+      // //X direction
+      // double total_width = 512e3;
+      // //Y direction
+      // double total_length = 512e3;
+      // double lithospheric_depth = 120e3;
+      // double oceanic_depth = 15e3;
+      // double continental_depth = 30e3;
+      // //y-direction
+      // double continental_length = 256e3;
+      // //x-direction
+      // double continental_width = 256e3;
 
-      double wz_width=20e3;
-      double wz_height=40e3;
-      double wz_depth=75e3;
-      double wz_angle = 60;
+      // double wz_width=20e3;
+      // double wz_height=40e3;
+      // double wz_depth=75e3;
+      // double wz_angle = 60;
 
       //Lithospheric mantle
       if (z >= total_depth-lithospheric_depth) resulting_cf = 3;
@@ -123,38 +114,42 @@ namespace aspect
       {
         prm.enter_subsection("Continental collision");
         {
-          prm.declare_entry ("Left composition", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the left boundary (at minimal x-value). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
-          prm.declare_entry ("Right composition", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the right boundary (at maximal x-value). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
-          prm.declare_entry ("Left composition lithosphere", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the left boundary (at minimal x-value). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
-          prm.declare_entry ("Right composition lithosphere", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the right boundary (at maximal x-value). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
-          prm.declare_entry ("Bottom composition", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the bottom boundary (at minimal y-value in 2d, or minimal "
-                             "z-value in 3d). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
-          prm.declare_entry ("Top composition", "",
-                             Patterns::List(Patterns::Double ()),
-                             "A comma separated list of composition boundary values "
-                             "at the top boundary (at maximal y-value in 2d, or maximal "
-                             "z-value in 3d). This list must have as many "
-                             "entries as there are compositional fields. Units: none.");
+          prm.declare_entry ("X extent", "512e3",
+                             Patterns::Double (),
+                             "Length of the model domain along the X axis. Units: m.");
+          prm.declare_entry ("Y extent", "512e3",
+                             Patterns::Double (),
+                             "Length of the model domain along the Y axis. Units: m.");
+          prm.declare_entry ("Z extent", "512e3",
+                             Patterns::Double (),
+                             "Length of the model domain along the Z axis. Units: m.");
+          prm.declare_entry ("Continental depth", "30e3",
+                             Patterns::Double (),
+                             "Depth of the bottom boundary of the continental lithosphere. Units: m.");
+          prm.declare_entry ("Continental length", "256e3",
+                             Patterns::Double (),
+                             "Length of the bottom boundary of the continental lithosphere. Units: m.");
+          prm.declare_entry ("Continental width", "256e3",
+                             Patterns::Double (),
+                             "Width of the bottom boundary of the continental lithosphere. Units: m.");
+          prm.declare_entry ("Oceanic depth", "15e3",
+                             Patterns::Double (),
+                             "Depth of the bottom boundary of the oceanic lithosphere. Units: m.");
+          prm.declare_entry ("Lithospheric depth", "120e3",
+                             Patterns::Double (),
+                             "Depth of the bottom boundary of the mantle lithosphere. Units: m.");
+          prm.declare_entry ("Weak zone depth", "75e3",
+                             Patterns::Double (),
+                             "Depth of the middle point of the weak zone. Units: m.");
+          prm.declare_entry ("Weak zone height", "40e3",
+                             Patterns::Double (),
+                             "Vertical extent of the weak zone. Units: m.");
+          prm.declare_entry ("Weak zone width", "20e3",
+                             Patterns::Double (),
+                             "Horizontal extent of the weak zone. Units: m.");
+          prm.declare_entry ("Weak zone angle", "60",
+                             Patterns::Double (),
+                             "Angle of the weak zone. Units: degrees.");
 
         }
         prm.leave_subsection ();
@@ -171,33 +166,18 @@ namespace aspect
       {
         prm.enter_subsection("Box with lithosphere boundary indicators");
         {
-          // switch (dim)
-          //   {
-          //     case 2:
-          //       composition_values[0] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Left composition")));
-          //       composition_values[1] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Right composition")));
-          //       composition_values[2] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Bottom composition")));
-          //       composition_values[3] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Top composition")));
-          //       composition_values[4] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Left composition lithosphere")));
-          //       composition_values[5] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Right composition lithosphere")));
-          //       break;
-
-          //     case 3:
-          //       composition_values[0] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Left composition")));
-          //       composition_values[1] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Right composition")));
-          //       composition_values[2] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Front composition")));
-          //       composition_values[3] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Back composition")));
-          //       composition_values[4] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Bottom composition")));
-          //       composition_values[5] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Top composition")));
-          //       composition_values[6] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Left composition lithosphere")));
-          //       composition_values[7] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Right composition lithosphere")));
-          //       composition_values[8] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Front composition lithosphere")));
-          //       composition_values[9] = Utilities::string_to_double(Utilities::split_string_list(prm.get ("Back composition lithosphere")));
-          //       break;
-
-          //     default:
-          //       Assert (false, ExcNotImplemented());
-          //   }
+          total_width = Utilities::string_to_double(prm.get ("X extent"));
+          total_length = Utilities::string_to_double(prm.get ("Y extent"));
+          total_depth = Utilities::string_to_double(prm.get ("Z extent"));
+          continental_width = Utilities::string_to_double(prm.get ("Continental width"));
+          continental_length = Utilities::string_to_double(prm.get ("Continental length"));
+          continental_depth = Utilities::string_to_double(prm.get ("Continental depth"));
+          oceanic_depth = Utilities::string_to_double(prm.get ("Oceanic depth"));
+          lithospheric_depth = Utilities::string_to_double(prm.get ("Lithospheric depth"));
+          wz_width = Utilities::string_to_double(prm.get ("Weak zone width"));
+          wz_height = Utilities::string_to_double(prm.get ("Weak zone height"));
+          wz_depth = Utilities::string_to_double(prm.get ("Weak zone depth"));
+          wz_angle = Utilities::string_to_double(prm.get ("Weak zone angle"));
         }
         prm.leave_subsection ();
       }
