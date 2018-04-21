@@ -88,8 +88,8 @@ namespace aspect
 
      double vel_x_in_left = vel_x_in * 2*(1-influx_assymetry);
      double vel_x_in_right = vel_x_in * 2*influx_assymetry;
-     double vel_x_out_left = vel_x_out * 2*(1-outflux_assymetry);
-     double vel_x_out_right = vel_x_out * 2*outflux_assymetry;
+     double vel_x_out_left = vel_x_out * 2*(1-outflux_assymetry) - mantle_wind;
+     double vel_x_out_right = vel_x_out * 2*outflux_assymetry + mantle_wind;
 
 
 
@@ -462,6 +462,9 @@ plate_tectonics<dim>::declare_parameters (ParameterHandler &prm)
       prm.declare_entry ("Outflux assymetry", "0.5",
        Patterns::Double (0),
        "0 is outflux from the left side, 0.5 is symmetric, 1 is from the right side");
+      prm.declare_entry ("Mantle wind", "0",
+       Patterns::Double (0),
+       "Intensity of mantle wind directed in the positive direction of x axis. Units: $cm / yr$");
       prm.declare_entry ("Transition type", "linear",
        Patterns::Selection("linear|sin"),
        "Shape of the velocity within the transition zone from outflux to influx");
@@ -505,6 +508,7 @@ plate_tectonics<dim>::parse_parameters (ParameterHandler &prm)
       transition_zone             = prm.get_double ("Transition zone height");
       influx_assymetry	          = prm.get_double ("Influx assymetry");
       outflux_assymetry	          = prm.get_double ("Outflux assymetry");
+      mantle_wind                 = prm.get_double("Mantle wind") * 0.01;
       transition_type             = prm.get("Transition type");
       conservation                = prm.get("Conservation");
 

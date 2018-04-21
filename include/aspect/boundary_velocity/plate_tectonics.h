@@ -75,12 +75,13 @@ namespace aspect
         double lithospheric_thickness;
         double transition_zone;
         double alfa;
-		double influx_assymetry;
-		double outflux_assymetry;
-    std::string transition_type;
-    std::string conservation;
-    std::vector<double> densities;
-    std::vector<double> thicknesses;
+    		double influx_assymetry;
+    		double outflux_assymetry;
+        double mantle_wind;
+        std::string transition_type;
+        std::string conservation;
+        std::vector<double> densities;
+        std::vector<double> thicknesses;
 
 
 
