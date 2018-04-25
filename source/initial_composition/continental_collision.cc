@@ -47,24 +47,6 @@ namespace aspect
       //Each following c.f. cuts through the previous ones
       unsigned int resulting_cf = 4;
 
-      // //Z direction
-      // double total_depth = 512e3;
-      // //X direction
-      // double total_width = 512e3;
-      // //Y direction
-      // double total_length = 512e3;
-      // double lithospheric_depth = 120e3;
-      // double oceanic_depth = 15e3;
-      // double continental_depth = 30e3;
-      // //y-direction
-      // double continental_length = 256e3;
-      // //x-direction
-      // double continental_width = 256e3;
-
-      // double wz_width=20e3;
-      // double wz_height=40e3;
-      // double wz_depth=75e3;
-      // double wz_angle = 60;
 
       //Lithospheric mantle
       if (z >= total_depth-lithospheric_depth) resulting_cf = 3;
@@ -75,10 +57,20 @@ namespace aspect
       //Continental crust
       if (dim == 3)
       {
-        if (z >= total_depth-continental_depth
-            && abs(x - (total_width/2)) <= continental_width/2
-            && abs(y - (total_length/2)) <= continental_length/2)
-          resulting_cf = 0;
+        if (configuration == "continent centered")
+        {
+          if (z >= total_depth-continental_depth
+              && abs(x - (total_width/2)) <= continental_width/2
+              && abs(y - (total_length/2)) <= continental_length/2)
+            resulting_cf = 0;
+        }
+        else
+        {
+          if (z >= total_depth-continental_depth
+              && abs(x - (total_width/2)) <= continental_width/2
+              && abs(y - (total_length/2)) >= continental_length/2)
+            resulting_cf = 0;
+        }
       }
       else
         if (z >= total_depth-continental_depth
@@ -150,6 +142,9 @@ namespace aspect
           prm.declare_entry ("Weak zone angle", "60",
                              Patterns::Double (),
                              "Angle of the weak zone. Units: degrees.");
+          prm.declare_entry ("Configuration", "continent centered",
+                         Patterns::Selection("continent centered|continent aside"),
+                         "Choose between 2 geometries. Doesn't have effect in 2D");
 
         }
         prm.leave_subsection ();
@@ -178,6 +173,7 @@ namespace aspect
           wz_height = Utilities::string_to_double(prm.get ("Weak zone height"));
           wz_depth = Utilities::string_to_double(prm.get ("Weak zone depth"));
           wz_angle = Utilities::string_to_double(prm.get ("Weak zone angle"));
+          configuration = prm.get ("Configuration");
         }
         prm.leave_subsection ();
       }

@@ -95,6 +95,7 @@ namespace aspect
         double wz_height;
         double wz_depth;
         double wz_angle;
+        std::string configuration;
     };
   }
 }
