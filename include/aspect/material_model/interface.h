@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011 - 2015 by the authors of the ASPECT code.
+  Copyright (C) 2011 - 2017 by the authors of the ASPECT code.
 
   This file is part of ASPECT.
 
@@ -454,11 +454,6 @@ namespace aspect
        */
       template <class AdditionalOutputType>
       const AdditionalOutputType *get_additional_output() const;
-
-      /**
-       * Check if all outputs were filled correctly.
-       **/
-      void validate() const;
     };
 
 
@@ -834,30 +829,6 @@ namespace aspect
          * model to update internal data structures.
          */
         virtual void update ();
-		
-        /**
-         * @name Physical parameters used in the basic equations
-         * @{
-         */
-        /**
-         * Return the viscosity ratio between disclocation creep and diffusion
-         * creep in the case of composite rheology
-         */
-        virtual double viscosity_ratio (const double      temperature,
-                                        const double      pressure,
-                                        const std::vector<double>    &compositional_fields,
-                                        const SymmetricTensor<2,dim> &strainrate,
-                                        const Point<dim> &position) const;
-
-
-        /**
-         * @}
-         */
-
-        
-		
-		
-		
 
         /**
          * @name Qualitative properties one can ask a material model
