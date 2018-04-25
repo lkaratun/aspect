@@ -114,6 +114,17 @@ namespace aspect
     }
 
 
+    template <int dim>
+    double
+    Interface<dim>::
+    viscosity_ratio (const double,
+                     const double,
+                     const std::vector<double> &,
+                     const SymmetricTensor<2,dim> &,
+                     const Point<dim> &) const
+    {
+      return 1.0;
+    }
 
     template <int dim>
     void
