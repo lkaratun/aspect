@@ -64,11 +64,18 @@ namespace aspect
               && abs(y - (total_length/2)) <= continental_length/2)
             resulting_cf = 0;
         }
-        else
+        else if (configuration == "continent aside")
         {
           if (z >= total_depth-continental_depth
               && abs(x - (total_width/2)) <= continental_width/2
               && abs(y - (total_length/2)) >= continental_length/2)
+            resulting_cf = 0;
+        }
+        else if (configuration == "single continent aside")
+        {
+          if (z >= total_depth-continental_depth
+              && abs(x - (total_width/2)) <= continental_width/2
+              && y <= continental_length)
             resulting_cf = 0;
         }
       }
@@ -143,7 +150,7 @@ namespace aspect
                              Patterns::Double (),
                              "Angle of the weak zone. Units: degrees.");
           prm.declare_entry ("Configuration", "continent centered",
-                         Patterns::Selection("continent centered|continent aside"),
+                         Patterns::Selection("continent centered|continent aside|single continent aside"),
                          "Choose between 2 geometries. Doesn't have effect in 2D");
 
         }
